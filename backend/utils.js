@@ -1,7 +1,7 @@
 module.exports.promisify = (op) => {
-    return function(arg){
+    return function(...args){
         return new Promise((resolve,reject)=>{
-            op(arg,(err,res)=>{
+            op(...args,(err,res)=>{
                 if (err) reject(err);
                 else resolve(res);
             })

@@ -1,6 +1,9 @@
 const express = require('express');
 const dao = require('./dao.js');
 const utils = require('./utils.js');
+const schemaMap = require('./schemabuilder');
+const resourceTables = schemaMap.resourceTables;
+
 const db = new dao({
    host: 'localhost',
    user: 'root',
@@ -8,12 +11,6 @@ const db = new dao({
    port: 3306,
    database: 'concordia_soen_proj'
 });
-
-const resourceTableMap = {
-   labs: 'rsc_labs',
-   rooms: 'rsc_rooms',
-   equipment: 'rsc_equipment'
-};
 
 const server = express();
 
@@ -27,25 +24,24 @@ SQL Safety middleware: Check the provided resource name before routing to the ap
  */
 server.use('/admin/:resource',(req,res,next)=>{
    const {resource} = req.params;
-   const table = resourceTableMap[resource];
+   const {table,columns} = resourceTables[resource];
    if (!table) {
       res.status(404).json({error:'Resource category not found'});
-      next();
       return;
    }
-   req.table = table;
+   req.table_name = table;
+   req.required_columns = columns;
    next();
 });
 /*
 GET
  */
 server.get('/admin/:resource',(request,response)=>{
-   const {resource} = request.params;
    const {id} = request.query;
 
    if (!id) {
       db.fetch({
-         table: request.table
+         table: request.table_name
       }).then(result=>response.json(result));
       return;
    }
@@ -56,7 +52,7 @@ server.get('/admin/:resource',(request,response)=>{
    }
 
    db.fetch({
-      table: request.table,
+      table: request.table_name,
       filters: {
          id: Number(id)
       }
@@ -66,12 +62,28 @@ server.get('/admin/:resource',(request,response)=>{
 POST
  */
 server.post('/admin/:resource',(request,response)=>{
-   // Perform an insertion
+   /*
+   we have the validated table
+   we need to extract the values from the body (already JSONIFIED using middleware)
+    */
+   const {name,location,available} = request.body;
+   db.put({
+      table: request.table_name,
+      columns: request.required_columns,
+      values: {
+         name: name,
+         location: location,
+         available: available.toLowerCase() === 'true'
+      }
+   }).then(res=>{
+      response.status(200).json({success: 'Successfully added new resource'})
+   }).catch(err=>{
+      response.status(500).json({error: err})
+   });
 });
-/*
-STATIC
- */
+//static
 server.use(express.static('../frontend'));
+
 server.listen(8000, () => {
    console.log('Listening on port 8000');
 }); //

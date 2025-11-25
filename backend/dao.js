@@ -1,6 +1,5 @@
 const mysql = require('mysql');
 const utils = require('./utils.js');
-const schemaMap = require('./schemabuilder').schemaMap;
 module.exports = class {
     #connection;
     #query;
@@ -19,13 +18,13 @@ module.exports = class {
     Insert to database
      */
     put(params) {
-        const {table,columns} = schemaMap[params.table];
-        const {values} = params;
-        if (!table) throw new Error(`Invalid category provided: ${params.table}`);
-        if (!columns || Object.keys(values).length !== Object.keys(columns).length) throw new Error('Column mismatch');
-
+        const columns = params.columns;
+        const table = params.table;
+        const keys = Object.keys(columns);
+        const statement = `INSERT INTO ${table} (${keys.join(',')}) VALUES (${keys.map(()=>'?').join(',')})`
+        const values = keys.map(key=>params.values[key]);
+        return this.#query(statement,values);
     }
-
     /*
     Retrieve from database
      */

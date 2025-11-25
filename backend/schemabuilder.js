@@ -1,10 +1,9 @@
-module.exports.schemaMap = {
+module.exports.resourceTables = {
     labs: {
         table: 'rsc_labs',
         columns: {
             name: 'VARCHAR',
             location: 'VARCHAR',
-            capacity: 'INT',
             available: 'BOOLEAN'
         }
     },
@@ -13,7 +12,6 @@ module.exports.schemaMap = {
         columns: {
             name: 'VARCHAR',
             location: 'VARCHAR',
-            capacity: 'INT',
             available: 'BOOLEAN'
         }
     },
