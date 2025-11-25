@@ -24,22 +24,25 @@ function saveProfile(profileObj){
 window.onload = function(){
 
     // get form inputs
+    var usernameInput = document.getElementById("username");
     var firstNameInput = document.getElementById("first-name");
     var lastNameInput= document.getElementById("last-name");
     var emailInput = document.getElementById("email");
     var phoneInput = document.getElementById("phone");
-    var avatarInput = document.getElementById("avatar");
-
-    var saveLink = this.document.getElementById("save-profile");
+    var passwordInput = document.getElementById("password");
+    var confirmInput = document.getElementById("confirm-password");
+    var saveLink = document.getElementById("save-profile");
 
     // load profile and fill form
     var existingProfile = loadProfile();
 
     if(existingProfile){
+        usernameInput.value = existingProfile.username || "";
         firstNameInput.value = existingProfile.firstName || "";
         lastNameInput.value = existingProfile.lastName || "";
         emailInput.value = existingProfile.email || "";
         phoneInput.value = existingProfile.phone ||"";
+        // do not prefill password fields for security reasons
     }
 
     // save profile on click
@@ -47,15 +50,18 @@ window.onload = function(){
         // stop page from redirecting immediately
         event.preventDefault();
 
-        // read inputs
+        // read 
+        var username = usernameInput.value;
         var firstName = firstNameInput.value;
         var lastName = lastNameInput.value;
         var email = emailInput.value;
         var phone = phoneInput.value;
+        var password = passwordInput.value;
+        var confirmPw = confirmInput.value;
 
-        // make sure all fields are filled 
-        if(!firstName || !lastName || !email || !phone){
-            alert("Please fill in all the fields before submitting.");
+        // make sure all required fields are filled 
+        if(!username|| !firstName || !lastName || !email || !phone){
+            alert("Please fill in all required fields before submitting.");
             return;
         }
 
@@ -73,13 +79,34 @@ window.onload = function(){
             return;
         }
 
-        // profile object
+        // password change is optional
+        if(password || confirmPw){
+            // both must be filled
+            if(!password || !confirmPw){
+                alert("Please fill in both password fields or leave both empty");
+                return;
+            }
+
+            // check if matches
+            if(password !== confirmPw){
+                alert("New password and Confirmation password do not match");
+                return;
+            }
+        }
+
+        // profile object 
         var profile = {
+            username: username,
             firstName: firstName,
             lastName:lastName,
             email: email,
             phone: phone
         };
+
+        // only update password if user filled the fields
+        if(password && confirmPw){
+            profile.password = password;
+        }
 
         // save into local storage
         saveProfile(profile);
