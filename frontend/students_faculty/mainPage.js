@@ -23,17 +23,11 @@ function saveBookings(){
     localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings));
 }
 
-// display all bookings as rows inside table body
-function renderBookings(){
-    var tbody = document.getElementById("booking-body");
-
-    // remove any old rows from table
-    tbody.innerHTML = "";
-
-    // update status for each booking if date < today {past}, else {future}
+// helper function chekcs if booking date is in the past
+function isPastBooking(dateStr){
     var today = new Date();
     var year = today.getFullYear();
-    var month = today.getMonth() + 1; // 1-12
+    var month = today.getMonth()+1// 1-12
     var day = today.getDate();
 
     // format date and month to always have 2 digits
@@ -50,19 +44,30 @@ function renderBookings(){
     else{
         day = "" + day// turn nbr into string
     }
-    var todayString = year + "-" + month + "-" + day; // final string
 
-    // loop through bookings and set status
-    for(var k = 0; k <bookings.length; k++){
-        if(bookings[k].date < todayString){
+    var todayString = year + "-"+ month + "-" + day;
+
+    // compare strings in yyy-mm-dd format
+    return dateStr < todayString;
+}
+// display all bookings as rows inside table body
+function renderBookings(){
+    var tbody = document.getElementById("booking-body");
+
+    // remove any old rows from table
+    tbody.innerHTML = "";
+
+    // update status past future for each booking
+    for(var k=0; k< bookings.length; k++){
+        if(isPastBooking(bookings[k].date)){
             bookings[k].status = "Past";
         }
-        else {
+        else{
             bookings[k].status = "Future";
         }
     }
 
-    // save updated status' into local storage
+    // save updated status 
     saveBookings();
 
     //if no bookings 
@@ -73,7 +78,7 @@ function renderBookings(){
         return
     }
 
-    // loop through each booking, create tr for each one
+    // loop through each booking, create row for each one
     for(var i = 0; i< bookings.length; i++){
         var b = bookings[i];
         var row = document.createElement("tr");
@@ -93,8 +98,13 @@ function renderBookings(){
         // status column
         html += "<td>" + b.status + "</td>";
 
-        //checking column for cancellations 
-        html +='<td><input type="checkbox" class="select-booking" data-id="' + b.id + '"></td>';
+        // disable checkbox for past bookings
+        if(b.status ==="Past"){
+            html += '<td> <input type="checkbox" disabled> </td>';
+        }
+        else{// can be selected for cancel
+            html += '<td> <input type = "checkbox" class="select-booking" data-id="' + b.id + '"></td>';
+        }
 
         // put html in row and add it to table
         row.innerHTML = html;
@@ -108,6 +118,13 @@ function setupCancelButton(){
 
     // when button clicked
     btn.addEventListener("click", function(){
+        // confirm before cancelling
+        var confirmDelete = confirm("Are you sure you want to cancel the selected bookings?");
+        if(!confirmDelete){
+            return;// user clicked cance;
+        }
+
+
         // get all checkboxes
         var checkboxes = document.getElementsByClassName("select-booking");
         var idsToRemove = [];
@@ -131,8 +148,15 @@ function setupCancelButton(){
         var newList = [];
         for(var j=0; j< bookings.length; j++){
             var currentBooking = bookings[j];
-            var keep = true;
+            
+            // never cancel past bookings
+            if(currentBooking.status === "Past"){
+                newList.push(currentBooking);
+                continue;
+            }
 
+
+            var keep = true;
             // check if this booking's id is in idsToRemove
             for(var k=0; k< idsToRemove.length; k++){
                 if(currentBooking.id === idsToRemove[k]){

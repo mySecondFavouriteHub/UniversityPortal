@@ -21,6 +21,9 @@
     
     <main class="edit-profile-content">
         <form>
+            <h3>Username</h3>
+            <input type="text" id="username" placeholder="Username" required>
+
             <h3>First Name</h3>
             <input type="text" id="first-name" placeholder="First Name" required>
             
@@ -33,8 +36,12 @@
             <h3>Phone Number</h3>
             <input type="tel" id="phone" placeholder="Phone Number" required>
             
-            <h3>Avatar</h3>
-            <input type="file" id="avatar" accept="image/*" required>
+            <h3>New Password (Optional)</h3>
+            <input type="password" id="password" placeholder="New Password">
+
+            <h3>Confirm New Password</h3>
+            <input type="password" id="confirm-password" placeholder="Confirm New Password">
+            
             <br>
             <br>
             <a href="mainPage.html" class="btn" id="save-profile">Submit</a>
