@@ -1,7 +1,7 @@
 const express = require('express');
 const dao = require('./dao.js');
 const utils = require('./utils.js');
-const schemaMap = require('./schemabuilder');
+const schemaMap = require('./schemaregistry');
 const resourceTables = schemaMap.resourceTables;
 
 const db = new dao({

@@ -25,3 +25,7 @@ module.exports.resourceTables = {
     }
 };
 
+module.exports.requestsTables = {
+
+}
+
