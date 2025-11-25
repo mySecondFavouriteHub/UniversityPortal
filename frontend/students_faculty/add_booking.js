@@ -1,6 +1,9 @@
 // store bookings in Local Storage
 var BOOKINGS_KEY = "studentBookings";
 
+// base URL for backend API
+var API_BASE = "http://localhost:8000";
+
 // load existing bookings from local storage
 function loadBookingForAdd(){
     var stored = localStorage.getItem(BOOKINGS_KEY);
@@ -36,7 +39,7 @@ function loadResources(){
     select.innerHTML = '<option value="" disabled selected> Select a resource</option>';
 
     // labs
-    fetch("/admin/labs")// call backend API
+    fetch(API_BASE + "/admin/labs")// call backend API
     .then(function(res){return res.json();})// convert backend response into JS array
     .then(function(labs){
         // loop through all labs
@@ -53,7 +56,7 @@ function loadResources(){
     });
 
     // rooms
-    fetch("/admin/rooms")// call backend API
+    fetch(API_BASE + "/admin/rooms")// call backend API
     .then(function(res){return res.json();})// convert backend response into JS array
     .then(function(rooms){
         // loop through all rooms
@@ -70,7 +73,7 @@ function loadResources(){
     });
 
     // equipment
-    fetch("/admin/equipment")// call backend API
+    fetch(API_BASE + "/admin/equipment")// call backend API
     .then(function(res){return res.json();})// convert backend response into JS array
     .then(function(eqs){
         // loop through all equipments
