@@ -28,6 +28,65 @@ function timeToMinutes(timeStr){
     return hours*60 + minutes // convert to minutes 
 }
 
+// load available resources from backend
+function loadResources(){
+    var select = document.getElementById("resource");
+
+    // keep default option
+    select.innerHTML = '<option value="" disabled selected> Select a resource</option>';
+
+    // labs
+    fetch("/admin/labs")// call backend API
+    .then(function(res){return res.json();})// convert backend response into JS array
+    .then(function(labs){
+        // loop through all labs
+        for(var i = 0; i< labs.length; i++){
+            var lab = labs[i];
+            var opt = document.createElement("option");// create option tag for each
+            opt.value = "Lab: " + lab.name; // what gets saved
+            opt.textContent = "Lab - " + lab.name;// what user sees
+            select.appendChild(opt);
+        }
+    })// handle error 
+    .catch(function(err){
+        console.error("Error loading labs:", err);
+    });
+
+    // rooms
+    fetch("/admin/rooms")// call backend API
+    .then(function(res){return res.json();})// convert backend response into JS array
+    .then(function(rooms){
+        // loop through all rooms
+        for(var i = 0; i< rooms.length; i++){
+            var room = rooms[i];
+            var opt = document.createElement("option");// create option tag for each
+            opt.value = "Room: " + room.name;// what gets saved
+            opt.textContent = "Room - " + room.name;// what user sees
+            select.appendChild(opt);
+        }
+    })// handle error 
+    .catch(function(err){
+        console.error("Error loading rooms:", err);
+    });
+
+    // equipment
+    fetch("/admin/equipment")// call backend API
+    .then(function(res){return res.json();})// convert backend response into JS array
+    .then(function(eqs){
+        // loop through all equipments
+        for(var i = 0; i< eqs.length; i++){
+            var eq = eqs[i];
+            var opt = document.createElement("option");// create option tag for each
+            opt.value = "Equipment: " + eq.name;// what gets saved
+            opt.textContent = "Equipment - " + eq.name;// what user sees
+            select.appendChild(opt);
+        }
+    })// handle error 
+    .catch(function(err){
+        console.error("Error loading equipments:", err);
+    });
+}
+
 // runs after page is fully loaded
 window.onload = function() {
 
@@ -56,6 +115,8 @@ window.onload = function() {
     var todayString = year + "-" + month + "-" + day; // final string
     dateInput.min = todayString; //set min allowed to current date
 
+    //load resources from backend into dropdown
+    loadResources();
 
     // get submit button
     var submitLink = document.getElementById("submit-booking");
@@ -112,7 +173,5 @@ window.onload = function() {
 
         // go back to main oage
         window.location.href = "mainPage.html";
-   
     });
-
-}
+};
