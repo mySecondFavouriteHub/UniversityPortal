@@ -1,4 +1,4 @@
-const mysql = require('mysql');
+const mysql = require('mysql2');
 const utils = require('./utils.js');
 module.exports = class {
     #connection;
