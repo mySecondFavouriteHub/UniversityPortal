@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Modify Resources - Concordia Resource Manager</title>
+  <link rel="stylesheet" href="dashboard.css">
+  <style>
+    .portal-content { display:flex; flex-direction:column; align-items:center; gap:2rem; padding:2%; }
+    .resource-grid { display:grid; grid-template-columns:1fr 1fr; gap:2rem; width:90%; max-width:1000px; }
+    .resource-box { display:flex; flex-direction:column; justify-content:space-between; border:1px solid lightgray; border-radius:10px; overflow:hidden; background:#f9f9f9; min-height:300px; }
+    .resource-title { background:var(--main-color); color:#fff; text-align:center; padding:10px; font-weight:bold; font-size:1.3rem; }
+    .resource-content { flex:1; overflow:auto; padding:10px; }
+    .resource-button { background:var(--secondary-color); border:none; cursor:pointer; font-size:1.5rem; padding:10px; transition:background-color .2s ease; }
+    .resource-button:hover { background:var(--hover-color); color:#000; }
+    .equipment-box { grid-column:1 / span 2; justify-self:center; width:50%; }
+
+    .resource-list { list-style:none; padding:0; margin:0; display:grid; gap:.5rem; }
+    .resource-item { padding:0; border-radius:6px; overflow:hidden; }
+    .resource-link {
+      display:flex; align-items:center; gap:.5rem; padding:.5rem .75rem;
+      border:1px solid lightgray; border-radius:6px; background:#fff; text-decoration:none; color:inherit;
+    }
+    .resource-link:hover { background:#f6f6f6; }
+    .thumb { width:28px; height:28px; object-fit:cover; border-radius:4px; border:1px solid #ddd; display:grid; place-items:center; font-size:12px; }
+    .badge { font-size:.75rem; padding:.15rem .5rem; border-radius:999px; border:1px solid #ccc; }
+    .avail-yes { color:#0b5ed7; }  /* Available */
+    .avail-no  { color:#c82333; }  /* Unavailable */
+  </style>
+</head>
+<body>
+<form class="manage-profile" id="manageProfile" role="dialog" aria-modal="true" aria-labelledby="manageProfileTitle" hidden>
+  <div class="mp-card" role="document">
+    <div class="mp-header">
+      <h2 id="manageProfileTitle">Manage Profile</h2>
+      <button type="button" class="mp-close" id="mpClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="mp-body">
+      <div class="mp-row mp-avatar">
+        <img id="mpAvatarPreview" src="../resources/avatar.jpg" alt="Avatar preview">
+      </div>
+      <div class="mp-field">
+        <label for="mpDisplayName">Display Name</label>
+        <input id="mpDisplayName" name="displayname" type="text" maxlength="80" />
+      </div>
+      <div class="mp-field">
+        <label for="mpEmail">Email</label>
+        <input id="mpEmail" name="email" type="email" />
+      </div>
+    </div>
+    <div class="mp-footer">
+      <button type="button" id="mpCancel">Cancel</button>
+      <button type="submit" id="mpSave">Save</button>
+    </div>
+  </div>
+</form>
+
+<div class="center">
+  <div id="banner"><img src="../resources/concordia.png" alt="Concordia"></div>
+  <h2 id="title">Modify Resources</h2>
+
+  <aside class="sidebar">
+    <form class="sidebar-buttons" action="dashboard.html" method="get">
+      <button id="dashboard" type="submit">Dashboard</button>
+      <button id="manage" class="sidebar-buttons-current-page" type="submit" formaction="modify.html">Modify Resources</button>
+      <button id="view" type="submit" formaction="requests.html" formmethod="get">Active Requests</button>
+      <!-- Data Analysis removed - embedded in dashboard -->
+    </form>
+    <div class="sidebar-deadspace"></div>
+    <button class="profile-button">
+      <div id="avatar"><img id="avatar-img" src="../resources/avatar.jpg" alt=""></div>
+      <div id="profile-name"><p id="displayname">[Display Name]</p><p id="email">[email@domain.gg]</p></div>
+    </button>
+  </aside>
+
+  <main class="portal">
+    <h3 id="portal-title">Resource Categories</h3>
+
+    <div class="portal-content">
+      <div class="resource-grid">
+        <!-- Study Rooms -->
+        <div class="resource-box">
+          <div class="resource-title">Study Rooms</div>
+          <div class="resource-content">
+            <ul class="resource-list">
+              <li><a class="resource-link" href="edit.html?id=study-01"><strong>Study Room 01</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
+              <li><a class="resource-link" href="edit.html?id=study-02"><strong>Study Room 02</strong><span style="flex:1;"></span><span class="badge avail-no">Unavailable</span></a></li>
+              <li><a class="resource-link" href="edit.html?id=study-03"><strong>Study Room 03</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
+              <li><a class="resource-link" href="edit.html?id=study-04"><strong>Study Room 04</strong><span style="flex:1;"></span><span class="badge avail-no">Unavailable</span></a></li>
+              <li><a class="resource-link" href="edit.html?id=study-05"><strong>Study Room 05</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
+              <li><a class="resource-link" href="edit.html?id=study-06"><strong>Study Room 06</strong><span style="flex:1;"></span><span class="badge avail-no">Unavailable</span></a></li>
+              <li><a class="resource-link" href="edit.html?id=study-07"><strong>Study Room 07</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
+            </ul>
+          </div>
+          <button class="resource-button" type="button" onclick="goCreate('study')">+</button>
+        </div>
+
+        <!-- Labs -->
+        <div class="resource-box">
+          <div class="resource-title">Labs</div>
+          <div class="resource-content">
+            <ul class="resource-list">
+              <li><a class="resource-link" href="edit.html?id=lab-01"><strong>Lab Room 01</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
+              <li><a class="resource-link" href="edit.html?id=lab-02"><strong>Lab Room 02</strong><span style="flex:1;"></span><span class="badge avail-no">Unavailable</span></a></li>
+              <li><a class="resource-link" href="edit.html?id=lab-03"><strong>Lab Room 03</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
+              <li><a class="resource-link" href="edit.html?id=lab-04"><strong>Lab Room 04</strong><span style="flex:1;"></span><span class="badge avail-no">Unavailable</span></a></li>
+              <li><a class="resource-link" href="edit.html?id=lab-05"><strong>Lab Room 05</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
+              <li><a class="resource-link" href="edit.html?id=lab-06"><strong>Lab Room 06</strong><span style="flex:1;"></span><span class="badge avail-no">Unavailable</span></a></li>
+              <li><a class="resource-link" href="edit.html?id=lab-07"><strong>Lab Room 07</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
+            </ul>
+          </div>
+          <button class="resource-button" type="button" onclick="goCreate('lab')">+</button>
+        </div>
+
+        <!-- Equipment -->
+        <div class="resource-box equipment-box">
+          <div class="resource-title">Equipment</div>
+          <div class="resource-content">
+            <ul class="resource-list">
+              <li><a class="resource-link" href="edit.html?id=eq-saw">
+                <img class="thumb" alt="" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='100%' height='100%' fill='%23fafafa'/><rect x='6' y='28' width='48' height='8' fill='%237aa2f7'/><polygon points='12,20 54,20 57,24 54,28 12,28' fill='%2394a3b8'/></svg>">
+                <strong>Saw</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
+              <li><a class="resource-link" href="edit.html?id=eq-3dp">
+                <img class="thumb" alt="" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='100%' height='100%' fill='%23fafafa'/><rect x='10' y='24' width='40' height='18' rx='4' fill='%2364748b'/><rect x='16' y='16' width='28' height='10' rx='3' fill='%2394a3b8'/></svg>">
+                <strong>3D Printer</strong><span style="flex:1;"></span><span class="badge avail-no">Unavailable</span></a></li>
+              <li><a class="resource-link" href="edit.html?id=eq-laser">
+                <img class="thumb" alt="" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='100%' height='100%' fill='%23fafafa'/><rect x='8' y='24' width='44' height='18' fill='%231f2937' stroke='%23eab308'/><rect x='8' y='18' width='44' height='6' fill='%23eab308'/></svg>">
+                <strong>Laser Engraver</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
+              <li><a class="resource-link" href="edit.html?id=eq-scope">
+                <img class="thumb" alt="" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='100%' height='100%' fill='%23fafafa'/><circle cx='16' cy='20' r='6' fill='%2360a5fa'/><rect x='22' y='18' width='24' height='6' fill='%2393c5fd'/></svg>">
+                <strong>Telescope</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
+            </ul>
+          </div>
+          <button class="resource-button" type="button" onclick="goCreate('equipment')">+</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<footer class="footer"><h3>footer</h3></footer>
+
+<script>
+  function goCreate(type){ location.href = `create.html?type=${encodeURIComponent(type)}`; }
+</script>
+<script src="manage-profile.js"></script>
+</body>
+</html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edit Resource - Concordia Resource Manager</title>
+  <link rel="stylesheet" href="dashboard.css" />
+  <style>
+    .form { display: grid; gap: 1rem; max-width: 700px; }
+    .row { display: grid; grid-template-columns: 1fr !important; gap: .5rem; }
+    .row.two { grid-template-columns: 1fr 1fr !important; gap: 1rem; }
+    label { font-weight: 600; }
+    label span { font-weight: normal; color: #444; }
+    input[type="text"], input[type="number"], select {
+      padding: .55rem .7rem; border: 1px solid #bbb; border-radius: 6px; width: 100%; box-sizing: border-box;
+    }
+    .preview { display: flex; align-items: center; gap: .5rem; }
+    .preview img { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
+
+    .actions { display: flex; gap: 1rem; margin-top: .5rem; flex-wrap: wrap; }
+    .btn { padding: .6rem 1rem; border: none; border-radius: 6px; cursor: pointer; }
+    .btn-primary { background: var(--main-color); color: #fff; }
+    .btn-ghost { background: #eee; color: #333; }
+    .btn-danger { background: #c82333; color: #fff; }
+
+    #portal-title { display: flex; align-items: center; min-height: 46px; padding-left: .5rem; }
+
+    /* Manage Profile Modal */
+    .manage-profile { /* existing styles */ }
+    .mp-card { /* existing styles */ }
+    .mp-header { /* existing styles */ }
+    .mp-close { /* existing styles */ }
+    .mp-body { /* existing styles */ }
+    .mp-row { /* existing styles */ }
+    .mp-avatar { /* existing styles */ }
+    .mp-field { /* existing styles */ }
+    .mp-footer { /* existing styles */ }
+  </style>
+</head>
+<body>
+<form class="manage-profile" id="manageProfile" role="dialog" aria-modal="true" aria-labelledby="manageProfileTitle" hidden>
+  <div class="mp-card" role="document">
+    <div class="mp-header">
+      <h2 id="manageProfileTitle">Manage Profile</h2>
+      <button type="button" class="mp-close" id="mpClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="mp-body">
+      <div class="mp-row mp-avatar">
+        <img id="mpAvatarPreview" src="../resources/avatar.jpg" alt="Avatar preview">
+      </div>
+      <div class="mp-field">
+        <label for="mpDisplayName">Display Name</label>
+        <input id="mpDisplayName" name="displayname" type="text" maxlength="80" />
+      </div>
+      <div class="mp-field">
+        <label for="mpEmail">Email</label>
+        <input id="mpEmail" name="email" type="email" />
+      </div>
+    </div>
+    <div class="mp-footer">
+      <button type="button" id="mpCancel">Cancel</button>
+      <button type="submit" id="mpSave">Save</button>
+    </div>
+  </div>
+</form>
+
+<div class="center">
+  <div id="banner"><img src="../resources/concordia.png" alt="Concordia"></div>
+  <h2 id="title">Modifying</h2>
+
+  <aside class="sidebar">
+    <form class="sidebar-buttons" action="modify.html" method="get">
+      <button id="dashboard" type="submit" formaction="dashboard.html">Dashboard</button>
+      <button id="manage" class="sidebar-buttons-current-page" type="submit">Modify Resources</button>
+      <button id="view" type="submit" formaction="requests.html" formmethod="get">Active Requests</button>
+      <!-- Data Analysis removed - embedded in dashboard -->
+    </form>
+    <div class="sidebar-deadspace"></div>
+    <button class="profile-button">
+      <div id="avatar"><img id="avatar-img" src="../resources/avatar.jpg"></div>
+      <div id="profile-name"><p id="displayname">[Display Name]</p><p id="email">[email@domain.gg]</p></div>
+    </button>
+  </aside>
+
+  <main class="portal">
+    <h3 id="portal-title"></h3>
+
+    <div style="padding: 1rem;">
+      <form id="editForm" class="form" novalidate>
+        <div class="row">
+          <label for="name" id="labelName">Name *</label>
+          <input id="name" name="name" type="text" />
+        </div>
+
+        <div class="row two">
+          <div class="row">
+            <label for="location">Location * <span>(e.g., EV-5.123)</span></label>
+            <input id="location" name="location" type="text" />
+          </div>
+
+          <div id="capacityWrap" class="row" style="display:none;">
+            <label for="capacity">Capacity * <span>(e.g., 12)</span></label>
+            <input id="capacity" name="capacity" type="number" min="1" />
+          </div>
+        </div>
+
+        <div class="row">
+          <label for="availability">Availability *</label>
+          <select id="availability" name="availability">
+            <option value="">Select…</option>
+            <option value="available">Available</option>
+            <option value="unavailable">Unavailable</option>
+          </select>
+        </div>
+
+        <div id="imageWrap" class="row" style="display:none;">
+          <label>Image <span>(static preview)</span></label>
+          <div class="preview" id="imgPreview"></div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="saveBtn">Save & Exit</button>
+          <button type="button" class="btn btn-ghost" id="discardBtn">Discard Changes & Exit</button>
+          <button type="button" class="btn btn-danger" id="deleteBtn">Delete Resource</button>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>
+
+<footer class="footer"><h3>footer</h3></footer>
+
+<script>
+  // --- Hard-coded items to match modify.html ---
+  const SVG = {
+    saw: `data:image/svg+xml;utf8,`+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='100%' height='100%' fill='#fafafa'/><rect x='6' y='28' width='48' height='8' fill='#7aa2f7'/><polygon points='12,20 54,20 57,24 54,28 12,28' fill='#94a3b8'/></svg>`),
+    printer: `data:image/svg+xml;utf8,`+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='100%' height='100%' fill='#fafafa'/><rect x='10' y='24' width='40' height='18' rx='4' fill='#64748b'/><rect x='16' y='16' width='28' height='10' rx='3' fill='#94a3b8'/></svg>`),
+    engraver: `data:image/svg+xml;utf8,`+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='100%' height='100%' fill='#fafafa'/><rect x='8' y='24' width='44' height='18' fill='#1f2937' stroke='#eab308'/><rect x='8' y='18' width='44' height='6' fill='#eab308'/></svg>`),
+    telescope: `data:image/svg+xml;utf8,`+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='100%' height='100%' fill='#fafafa'/><circle cx='16' cy='20' r='6' fill='#60a5fa'/><rect x='22' y='18' width='24' height='6' fill='#93c5fd'/></svg>`)
+  };
+
+  const ITEMS = [
+    // Study Rooms 01–07
+    { id:'study-01', type:'study', name:'Study Room 01', location:'EV-6.100', capacity:4, availability:'available' },
+    { id:'study-02', type:'study', name:'Study Room 02', location:'EV-6.101', capacity:6, availability:'unavailable' },
+    { id:'study-03', type:'study', name:'Study Room 03', location:'EV-6.102', capacity:6, availability:'available' },
+    { id:'study-04', type:'study', name:'Study Room 04', location:'EV-6.103', capacity:8, availability:'unavailable' },
+    { id:'study-05', type:'study', name:'Study Room 05', location:'EV-6.104', capacity:4, availability:'available' },
+    { id:'study-06', type:'study', name:'Study Room 06', location:'EV-6.105', capacity:6, availability:'unavailable' },
+    { id:'study-07', type:'study', name:'Study Room 07', location:'EV-6.106', capacity:8, availability:'available' },
+
+    // Labs 01–07
+    { id:'lab-01', type:'lab', name:'Lab Room 01', location:'EV-5.210', capacity:12, availability:'available' },
+    { id:'lab-02', type:'lab', name:'Lab Room 02', location:'EV-5.211', capacity:18, availability:'unavailable' },
+    { id:'lab-03', type:'lab', name:'Lab Room 03', location:'EV-5.212', capacity:18, availability:'available' },
+    { id:'lab-04', type:'lab', name:'Lab Room 04', location:'EV-5.213', capacity:24, availability:'unavailable' },
+    { id:'lab-05', type:'lab', name:'Lab Room 05', location:'EV-5.214', capacity:12, availability:'available' },
+    { id:'lab-06', type:'lab', name:'Lab Room 06', location:'EV-5.215', capacity:18, availability:'unavailable' },
+    { id:'lab-07', type:'lab', name:'Lab Room 07', location:'EV-5.216', capacity:24, availability:'available' },
+
+    // Equipment
+    { id:'eq-saw',   type:'equipment', name:'Saw',            location:'Tool Crib A',    availability:'available',   imageData: SVG.saw },
+    { id:'eq-3dp',   type:'equipment', name:'3D Printer',     location:'Prototyping Lab', availability:'unavailable', imageData: SVG.printer },
+    { id:'eq-laser', type:'equipment', name:'Laser Engraver', location:'Fab Lab',        availability:'available',   imageData: SVG.engraver },
+    { id:'eq-scope', type:'equipment', name:'Telescope',      location:'Roof Deck',       availability:'available',   imageData: SVG.telescope },
+  ];
+
+  // Load item by ?id=
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  const item = ITEMS.find(x => x.id === id);
+
+  // If not found, stay on this page but show a simple message instead of bouncing back
+  if (!item) {
+    document.getElementById('portal-title').textContent = 'Resource not found';
+  }
+
+  // Fill UI
+  const nameEl = document.getElementById('name');
+  const locationEl = document.getElementById('location');
+  const capacityWrap = document.getElementById('capacityWrap');
+  const capacityEl = document.getElementById('capacity');
+  const availabilityEl = document.getElementById('availability');
+  const imageWrap = document.getElementById('imageWrap');
+  const imgPreview = document.getElementById('imgPreview');
+
+  if (item){
+    nameEl.value = item.name || '';
+    locationEl.value = item.location || '';
+    availabilityEl.value = item.availability || '';
+
+    if (item.type === 'equipment'){
+      imageWrap.style.display = '';
+      if (item.imageData){
+        imgPreview.innerHTML = `<img src="${item.imageData}" alt=""><span>Current image</span>`;
+      }
+    } else {
+      capacityWrap.style.display = '';
+      if (typeof item.capacity !== 'undefined') capacityEl.value = item.capacity;
+    }
+
+    const humanType = { study:'Study Room', lab:'Lab Room', equipment:'Equipment' }[item.type] || 'Resource';
+    const titleEl = document.getElementById('title');
+    const bandEl  = document.getElementById('portal-title');
+    function updateTitles(){
+      titleEl.textContent = `Modifying ${nameEl.value || humanType}`;
+      bandEl.textContent  = nameEl.value || '';
+    }
+    updateTitles();
+    nameEl.addEventListener('input', updateTitles);
+  }
+
+  // Buttons just go back (no persistence required for this hard-coded version)
+  function back(){ location.href = 'modify.html'; }
+  document.getElementById('saveBtn').addEventListener('click', back);
+  document.getElementById('discardBtn').addEventListener('click', back);
+  document.getElementById('deleteBtn').addEventListener('click', back);
+</script>
+<script src="manage-profile.js"></script>
+</body>
+</html>
