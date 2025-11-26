@@ -26,6 +26,10 @@ Procedure:
 2) Maintain the URL routes for each individual category
  */
 module.exports.requestsTables = {
-    table: ''
+    columns: {
+        id: 'INT',
+        resource_id: 'INT',
+        username: 'VARCHAR'
+    }
 }
 

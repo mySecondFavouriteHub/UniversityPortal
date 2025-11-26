@@ -274,6 +274,90 @@ server.delete('/admin/:resource', (req, res) => {
    });
 });
 
+/*
+BOOKING REQUEST MANAGEMENT
+ */
+server.post('/api/requests', (req, res) => {
+   const { resource_id, username } = req.body;
+   if (!resource_id || !utils.isNumeric(resource_id) || !username) {
+      res.status(400).json({ error: 'resource_id and username required' });
+      return;
+   }
+   db.put({
+      table: 'requests',
+      columns: { resource_id: 0, username: '' },
+      values: { resource_id: Number(resource_id), username: username }
+   }).then(() => {
+      res.json({ success: 'Request created' });
+   }).catch(err => {
+      res.status(500).json({ error: err });
+   });
+});
+
+server.get('/api/requests', (req, res) => {
+   const { id, username, resource_id } = req.query;
+   const filters = {};
+   if (id && utils.isNumeric(id)) filters.id = Number(id);
+   if (resource_id && utils.isNumeric(resource_id)) filters.resource_id = Number(resource_id);
+   if (username) filters.username = username;
+
+   if (Object.keys(filters).length === 0) {
+      db.fetch({ table: 'requests' }).then(r => res.json(r));
+      return;
+   }
+
+   db.fetch({ table: 'requests', filters }).then(r => res.json(r))
+       .catch(err => res.status(500).json({ error: err }));
+});
+
+server.put('/api/requests', (req, res) => {
+   const { id, resource_id, username } = req.body;
+   if (!id || !utils.isNumeric(id)) {
+      res.status(400).json({ error: 'Valid id required' });
+      return;
+   }
+
+   const columns = {};
+   if (resource_id !== undefined) columns.resource_id = Number(resource_id);
+   if (username !== undefined) columns.username = username;
+
+   db.update({
+      table: 'requests',
+      columns,
+      filters: { id: Number(id) }
+   }).then(() => {
+      res.json({ success: 'Request updated' });
+   }).catch(err => {
+      res.status(500).json({ error: err });
+   });
+});
+
+server.delete('/api/requests', (req, res) => {
+   const { id } = req.body;
+   if (!id || !utils.isNumeric(id)) {
+      res.status(400).json({ error: 'Valid id required' });
+      return;
+   }
+
+   db.delete({
+      table: 'requests',
+      filters: { id: Number(id) }
+   }).then(() => {
+      res.json({ success: 'Request deleted' });
+   }).catch(err => {
+      res.status(500).json({ error: err });
+   });
+});
+
+/*
+METRICS
+ */
+server.get('/api/metrics/requests-per-resource', (req, res) => {
+   db.metrics()
+       .then(result => res.json(result))
+       .catch(err => res.status(500).json({ error: err }));
+});
+
 //static
 server.use(express.static('../frontend'));
 

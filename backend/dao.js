@@ -63,4 +63,16 @@ module.exports = class {
         const statement = `DELETE FROM ${table} WHERE ${whereClause}`;
         return this.#query(statement, values);
     }
+    /*
+    METRICS
+     */
+    metrics() {
+        const statement = `
+        SELECT r.id, r.name, r.location, r.type, COUNT(req.id) AS request_count FROM resources r
+        LEFT JOIN requests req ON r.id = req.resource_id
+        GROUP BY r.id, r.name, r.location, r.type
+        ORDER BY request_count DESC;
+    `;
+        return this.#query(statement);
+    }
 }
