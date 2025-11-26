@@ -165,18 +165,18 @@ function setupCancelButton(){
 
             // figure out which endpoint based on resource type
             if(resource.includes("Lab")){
-                endpoint = "/bookings/labs/cancel";
+                endpoint = "/admin/labs";
             }
             else if(resource.includes("Room")){
-                endpoint = "/bookings/rooms/cancel";
+                endpoint = "/admin/rooms";
             }
             else if(resource.includes("Equipment")){
-                endpoint = "/bookings/equipment/cancel";
+                endpoint = "/admin/equipment";
             }
 
             // send delete or post request 
             fetch(API_BASE + endpoint, {
-                method: "POST",
+                method: "PUT",
                 headers: {
                     "Content-Type": "aplication/json"
                 },

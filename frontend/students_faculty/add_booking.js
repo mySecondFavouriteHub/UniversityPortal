@@ -186,8 +186,8 @@ window.onload = function() {
         if(resource.includes("Lab")){
 
             // POST to labs booking API
-            fetch(API_BASE + "/bookings/labs", {
-                method: "POST",
+            fetch(API_BASE + "/admin/labs", {
+                method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
                 },
@@ -212,8 +212,8 @@ window.onload = function() {
         else if(resource.includes("Room")){
             
             // POST to rooms booking API
-            fetch(API_BASE + "/bookings/rooms", {
-                method: "POST",
+            fetch(API_BASE + "/admin/rooms", {
+                method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
                 },
@@ -238,8 +238,8 @@ window.onload = function() {
         else if(resource.includes("Equipment")){
 
             // POST to equipment booking API
-            fetch(API_BASE + "/bookings/equipment", {
-                method: "POST",
+            fetch(API_BASE + "/admin/equipment", {
+                method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
                 },
