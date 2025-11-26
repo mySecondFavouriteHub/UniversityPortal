@@ -1,4 +1,6 @@
 const express = require('express');
+const fs = require('fs').promises;
+const path = require('path');
 const dao = require('./dao.js');
 const utils = require('./utils.js');
 const schemaMap = require('./schemaregistry');
@@ -15,22 +17,152 @@ const db = new dao({
 const server = express();
 
 server.use(express.json());
+
 /*
-The next part of this module is responsible for all the routing.
- */
-//Give all if no query params provided
+====================
+USER MANAGEMENT ROUTES
+====================
+*/
+
+// Get user data by username (for login and profile loading)
+server.get('/api/users/:username', async (req, res) => {
+   const { username } = req.params;
+
+   try {
+      const usersPath = path.join(__dirname, '../frontend/resources/users.json');
+      const data = await fs.readFile(usersPath, 'utf8');
+      const users = JSON.parse(data);
+
+      // Search in both students and admins
+      let user = users.students.find(u => u.username === username);
+      let userType = 'student';
+
+      if (!user) {
+         user = users.admins.find(u => u.username === username);
+         userType = 'admin';
+      }
+
+      if (!user) {
+         return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Return user without password for security
+      const { password, ...userWithoutPassword } = user;
+      res.json({ ...userWithoutPassword, userType });
+
+   } catch (error) {
+      console.error('Error reading users:', error);
+      res.status(500).json({ error: 'Failed to load user data' });
+   }
+});
+
+// Update user profile
+server.put('/api/users/:username', async (req, res) => {
+   const { username } = req.params;
+   const { firstName, lastName, email, phone, password, userType } = req.body;
+
+   try {
+      const usersPath = path.join(__dirname, '../frontend/resources/users.json');
+      const data = await fs.readFile(usersPath, 'utf8');
+      const users = JSON.parse(data);
+
+      // Determine which array to update
+      const userArray = userType === 'admin' ? 'admins' : 'students';
+      const userIndex = users[userArray].findIndex(u => u.username === username);
+
+      if (userIndex === -1) {
+         return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Update user data
+      const updatedUser = {
+         username: username, // username shouldn't change
+         firstName: firstName,
+         lastName: lastName,
+         email: email,
+         phone: phone,
+         password: password || users[userArray][userIndex].password // keep old password if not provided
+      };
+
+      users[userArray][userIndex] = updatedUser;
+
+      // Write back to file
+      await fs.writeFile(usersPath, JSON.stringify(users, null, 2), 'utf8');
+
+      // Return success without password
+      const { password: _, ...userWithoutPassword } = updatedUser;
+      res.json({
+         success: true,
+         message: 'Profile updated successfully',
+         user: userWithoutPassword
+      });
+
+   } catch (error) {
+      console.error('Error updating user:', error);
+      res.status(500).json({ error: 'Failed to update profile' });
+   }
+});
+
+// Validate login credentials
+server.post('/api/login', async (req, res) => {
+   const { username, password, userType } = req.body;
+
+   try {
+      const usersPath = path.join(__dirname, '../frontend/resources/users.json');
+      const data = await fs.readFile(usersPath, 'utf8');
+      const users = JSON.parse(data);
+
+      // Get appropriate user list
+      const userArray = userType === 'admin' ? users.admins : users.students;
+      const user = userArray.find(u => u.username === username && u.password === password);
+
+      if (!user) {
+         return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      // Validate username prefix matches user type
+      const prefix = username.substring(0, 3);
+      if ((userType === 'student' && prefix !== '403') ||
+          (userType === 'admin' && prefix !== '503')) {
+         return res.status(401).json({ error: 'Invalid user type' });
+      }
+
+      // Return user data without password
+      const { password: _, ...userWithoutPassword } = user;
+      res.json({
+         success: true,
+         user: userWithoutPassword,
+         userType: userType
+      });
+
+   } catch (error) {
+      console.error('Error during login:', error);
+      res.status(500).json({ error: 'Login failed' });
+   }
+});
+
+/*
+====================
+RESOURCE MANAGEMENT ROUTES (EXISTING)
+====================
+*/
+
 /*
 SQL Safety middleware: Check the provided resource name before routing to the appropriate handler.
  */
-server.use('/admin/:resource',(req,res,next)=>{
-   const {resource} = req.params;
-   const {table,columns} = resourceTables[resource];
-   if (!table) {
-      res.status(404).json({error:'Resource category not found'});
+server.use('/admin/:resource', (req, res, next) => {
+   const { resource } = req.params;
+   const entry = resourceTables.categories[resource];
+
+   if (!entry) {
+      res.status(404).json({ error: 'Resource category not found' });
       return;
    }
-   req.table_name = table;
-   req.required_columns = columns;
+
+   req.table_name = entry.table;
+   req.resource_type = entry.type;
+   req.required_columns = resourceTables.columns;
+
    next();
 });
 /*
@@ -41,7 +173,10 @@ server.get('/admin/:resource',(request,response)=>{
 
    if (!id) {
       db.fetch({
-         table: request.table_name
+         table: request.table_name,
+         filters: {
+            type: `'${request.resource_type}'`
+         }
       }).then(result=>response.json(result));
       return;
    }
@@ -54,10 +189,12 @@ server.get('/admin/:resource',(request,response)=>{
    db.fetch({
       table: request.table_name,
       filters: {
-         id: Number(id)
+         id: Number(id),
+         type: `'${request.resource_type}'`
       }
    }).then(result=>response.json(result));
 });
+
 /*
 POST
  */
@@ -73,7 +210,8 @@ server.post('/admin/:resource',(request,response)=>{
       values: {
          name: name,
          location: location,
-         available: available.toLowerCase() === 'true'
+         available: available.toLowerCase() === 'true',
+         type: request.resource_type
       }
    }).then(res=>{
       response.status(200).json({success: 'Successfully added new resource'})
@@ -81,11 +219,10 @@ server.post('/admin/:resource',(request,response)=>{
       response.status(500).json({error: err})
    });
 });
+
 //static
 server.use(express.static('../frontend'));
 
 server.listen(8000, () => {
    console.log('Listening on port 8000');
-}); //
-
-
+});

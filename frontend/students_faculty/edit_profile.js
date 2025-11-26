@@ -1,27 +1,5 @@
-// store profile in Local Storage
-var PROFILE_KEY = "studentProfile";
-
-// load existing bookings from local storage
-function loadProfile(){
-    var stored = localStorage.getItem(PROFILE_KEY);
-
-    if(stored){
-        // convert JSON string to JavaScript array
-        return JSON.parse(stored);
-    }
-    else{
-        // if nothing saved yet, return empty list
-        return null
-    }
-}
-
-//save profile onto local Storage
-function saveProfile(profileObj){
-    localStorage.setItem(PROFILE_KEY, JSON.stringify(profileObj));
-}
-
 // run when page loads
-window.onload = function(){
+window.onload = async function(){
 
     // get form inputs
     var usernameInput = document.getElementById("username");
@@ -33,24 +11,34 @@ window.onload = function(){
     var confirmInput = document.getElementById("confirm-password");
     var saveLink = document.getElementById("save-profile");
 
-    // load profile and fill form
-    var existingProfile = loadProfile();
+    // Get current user from sessionStorage
+    var currentUserStr = sessionStorage.getItem('currentUser');
 
-    if(existingProfile){
-        usernameInput.value = existingProfile.username || "";
-        firstNameInput.value = existingProfile.firstName || "";
-        lastNameInput.value = existingProfile.lastName || "";
-        emailInput.value = existingProfile.email || "";
-        phoneInput.value = existingProfile.phone ||"";
-        // do not prefill password fields for security reasons
+    if (!currentUserStr) {
+        alert("No user logged in. Redirecting to login page.");
+        window.location.href = "../login_page.html";
+        return;
     }
 
+    var currentUser = JSON.parse(currentUserStr);
+
+    // Pre-fill form with current user data
+    usernameInput.value = currentUser.username || "";
+    firstNameInput.value = currentUser.firstName || "";
+    lastNameInput.value = currentUser.lastName || "";
+    emailInput.value = currentUser.email || "";
+    phoneInput.value = currentUser.phone || "";
+
+    // Make username read-only (shouldn't be changed)
+    usernameInput.setAttribute('readonly', true);
+    usernameInput.style.backgroundColor = "#f0f0f0";
+
     // save profile on click
-    saveLink.addEventListener("click", function(event){
+    saveLink.addEventListener("click", async function(event){
         // stop page from redirecting immediately
         event.preventDefault();
 
-        // read 
+        // read form values
         var username = usernameInput.value;
         var firstName = firstNameInput.value;
         var lastName = lastNameInput.value;
@@ -59,7 +47,7 @@ window.onload = function(){
         var password = passwordInput.value;
         var confirmPw = confirmInput.value;
 
-        // make sure all required fields are filled 
+        // make sure all required fields are filled
         if(!username|| !firstName || !lastName || !email || !phone){
             alert("Please fill in all required fields before submitting.");
             return;
@@ -94,24 +82,75 @@ window.onload = function(){
             }
         }
 
-        // profile object 
-        var profile = {
+        // Prepare updated profile
+        var updatedProfile = {
             username: username,
             firstName: firstName,
-            lastName:lastName,
+            lastName: lastName,
             email: email,
             phone: phone
         };
 
-        // only update password if user filled the fields
+        // Include password if user wants to change it
         if(password && confirmPw){
-            profile.password = password;
+            updatedProfile.password = password;
         }
 
-        // save into local storage
-        saveProfile(profile);
+        // Save to users.json
+        var saveSuccess = await saveProfileToJSON(updatedProfile, currentUser.userType);
 
-        // go back to main page
-        window.location.href = "mainPage.html";
+        if(saveSuccess){
+            // Update sessionStorage with new info
+            sessionStorage.setItem('currentUser', JSON.stringify({
+                username: updatedProfile.username,
+                userType: currentUser.userType,
+                firstName: updatedProfile.firstName,
+                lastName: updatedProfile.lastName,
+                email: updatedProfile.email,
+                phone: updatedProfile.phone
+            }));
+
+            alert("Profile updated successfully!");
+            // go back to main page
+            window.location.href = "mainPage.html";
+        } else {
+            alert("Failed to save profile. Please try again.");
+        }
     });
 };
+
+// Function to save profile changes to users.json
+async function saveProfileToJSON(profileData, userType) {
+    try {
+        // Call backend API to update user
+        const response = await fetch(`http://localhost:8000/api/users/${profileData.username}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                firstName: profileData.firstName,
+                lastName: profileData.lastName,
+                email: profileData.email,
+                phone: profileData.phone,
+                password: profileData.password, // will be undefined if not changing
+                userType: userType
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            console.log('Profile updated successfully:', data);
+            return true;
+        } else {
+            console.error('Failed to update profile:', data.error);
+            return false;
+        }
+
+    } catch (error) {
+        console.error('Error saving profile:', error);
+        alert('Error connecting to server. Please try again later.');
+        return false;
+    }
+}

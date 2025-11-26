@@ -1,31 +1,31 @@
 module.exports.resourceTables = {
-    labs: {
-        table: 'rsc_labs',
-        columns: {
-            name: 'VARCHAR',
-            location: 'VARCHAR',
-            available: 'BOOLEAN'
-        }
+    columns: {
+        name: 'VARCHAR',
+        location: 'VARCHAR',
+        available: 'BOOLEAN',
+        type: 'VARCHAR'
     },
-    rooms: {
-        table: 'rsc_rooms',
-        columns: {
-            name: 'VARCHAR',
-            location: 'VARCHAR',
-            available: 'BOOLEAN'
-        }
-    },
-    equipment: {
-        table: 'rsc_equipment',
-        columns: {
-            name: 'VARCHAR',
-            location: 'VARCHAR',
-            available: 'BOOLEAN'
+    categories: {
+        labs: {
+            table: 'resources',
+            type: 'lab'
+        },
+        rooms: {
+            table: 'resources',
+            type: 'room'
+        },
+        equipment: {
+            table: 'resources',
+            type: 'equipment'
         }
     }
 };
-
+/*
+Procedure:
+1) Combine the resources into one table
+2) Maintain the URL routes for each individual category
+ */
 module.exports.requestsTables = {
-
+    table: ''
 }
 
