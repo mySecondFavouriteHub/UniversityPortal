@@ -214,7 +214,7 @@ server.post('/admin/:resource',(request,response)=>{
          available: available.toLowerCase() === 'true',
          type: request.resource_type
       }
-   }).then(res=>{
+   }).then(() =>{
       response.status(200).json({success: 'Successfully added new resource'})
    }).catch(err=>{
       response.status(500).json({error: err})
@@ -287,8 +287,10 @@ server.post('/api/requests', (req, res) => {
       table: 'requests',
       columns: { resource_id: 0, username: '' },
       values: { resource_id: Number(resource_id), username: username }
-   }).then(() => {
-      res.json({ success: 'Request created' });
+   }).then((result) => {
+      // return the newly created request id so frontend can delete it later
+      const insertId = result && result.insertId ? result.insertId : null;
+      res.json({ success: 'Request created', id: insertId });
    }).catch(err => {
       res.status(500).json({ error: err });
    });

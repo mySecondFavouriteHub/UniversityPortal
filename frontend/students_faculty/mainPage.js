@@ -82,7 +82,7 @@ function renderBookings(){
     tbody.innerHTML = "";
 
     // update status past future for each booking
-    for(var k=0; k< bookings.length; k++){
+    for(let k=0; k< bookings.length; k++){
         if(isPastBooking(bookings[k])){
             bookings[k].status = "Past";
         }
@@ -103,9 +103,9 @@ function renderBookings(){
     }
 
     // loop through each booking, create row for each one
-    for(var i = 0; i< bookings.length; i++){
-        var b = bookings[i];
-        var row = document.createElement("tr");
+    for(let i = 0; i< bookings.length; i++){
+        let b = bookings[i];
+        let row = document.createElement("tr");
 
         // build HTML for the row
         var html = "";
@@ -155,14 +155,14 @@ function setupCancelButton(){
         var bookingsToCancel = [];
 
         // go through all checkboxes and collect ids
-        for(var i=0; i< checkboxes.length; i++){
+        for(let i=0; i< checkboxes.length; i++){
             if(checkboxes[i].checked){
-                var idStr = checkboxes[i].getAttribute("data-id");
-                var idNum = parseInt(idStr);
+                let idStr = checkboxes[i].getAttribute("data-id");
+                let idNum = parseInt(idStr);
                 idsToRemove.push(idNum);
 
                 // find booking object
-                for(var j=0; j< bookings.length; j++){
+                for(let j=0; j< bookings.length; j++){
                     if(bookings[j].id ===idNum){
                         bookingsToCancel.push(bookings[j]);
                         break;
@@ -178,75 +178,122 @@ function setupCancelButton(){
         }
 
         // send cancellation to backend for each booking
-        for(var m=0; m< bookingsToCancel.length; m++){
-            var booking = bookingsToCancel[m];
-            var resource = booking.resource;
-            var endpoint = "";
+        // collect server-side operations (resource PUT, request DELETE) then apply local changes
+        var serverPromises = [];
+        for(let m=0; m< bookingsToCancel.length; m++){
+            (function(booking){
+                 var resource = booking.resource;
+                 var endpoint = "";
 
-            // figure out which endpoint based on resource type
-            if(resource.includes("Lab")){
-                endpoint = "/admin/labs";
-            }
-            else if(resource.includes("Room")){
-                endpoint = "/admin/rooms";
-            }
-            else if(resource.includes("Equipment")){
-                endpoint = "/admin/equipment";
-            }
+                // figure out which endpoint based on resource type
+                if(resource.includes("Lab")){
+                    endpoint = "/admin/labs";
+                }
+                else if(resource.includes("Room")){
+                    endpoint = "/admin/rooms";
+                }
+                else if(resource.includes("Equipment")){
+                    endpoint = "/admin/equipment";
+                }
 
-            // send PUT request to mark resource as available again
-            fetch(API_BASE + endpoint, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    id: booking.resourceId,
-                    available: true
-                })
-            })
-            .then(function(res){ return res.json();})
-            .then(function(data){
-                console.log("Booking cancelled in database:", data);
-            })
-            .catch(function(err){
-                console.error("Error cancelling booking:", err);
-            });
+                // send PUT request to mark resource as available again
+                var putPromise = fetch(API_BASE + endpoint, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        id: booking.resourceId,
+                        available: true
+                    })
+                }).then(function(res){ return res.json(); })
+                .then(function(data){
+                    console.log("Resource marked available:", data);
+                }).catch(function(err){
+                    console.error("Error marking resource available:", err);
+                });
+
+                serverPromises.push(putPromise);
+
+                // if we have a backend request id, delete the request from the server
+                if(booking.requestId && !isNaN(Number(booking.requestId))){
+                    var delPromise = fetch(API_BASE + "/api/requests", {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ id: Number(booking.requestId) })
+                    }).then(function(res){ return res.json(); })
+                    .then(function(data){
+                        console.log("Request deleted on server:", data);
+                    }).catch(function(err){
+                        console.error("Error deleting request on server:", err);
+                    });
+
+                    serverPromises.push(delPromise);
+                } else {
+                    // no requestId available; log that server-side delete cannot be performed
+                    console.warn('No server requestId for booking, skipping server delete for', booking);
+                }
+            })(bookingsToCancel[m]);
         }
 
-        // build new list of bookings without ones we want to remove
-        var newList = [];
-        for(var j=0; j< bookings.length; j++){
-            var currentBooking = bookings[j];
-            
-            // never cancel past bookings
-            if(currentBooking.status === "Past"){
-                newList.push(currentBooking);
-                continue;
-            }
+        // wait for all server operations to finish (best-effort) before updating local UI
+        Promise.all(serverPromises).then(function(){
+            // build new list of bookings without ones we want to remove
+            let newList = [];
+            for(let j=0; j< bookings.length; j++){
+                let currentBooking = bookings[j];
 
-            var keep = true;
-            // check if this booking's id is in idsToRemove
-            for(var k=0; k< idsToRemove.length; k++){
-                if(currentBooking.id === idsToRemove[k]){
-                    keep = false; // do not keep 
+                // never cancel past bookings
+                if(currentBooking.status === "Past"){
+                    newList.push(currentBooking);
+                    continue;
+                }
+
+                let keep = true;
+                // check if this booking's id is in idsToRemove
+                for(let k=0; k< idsToRemove.length; k++){
+                    if(currentBooking.id === idsToRemove[k]){
+                        keep = false; // do not keep
+                    }
+                }
+
+                // if we can keep booking, send to new List
+                if(keep) {
+                    newList.push(currentBooking);
                 }
             }
 
-            // if we can keep booking, send to new List
-            if(keep) {
-                newList.push(currentBooking);
+            // replace old bookings list with new one
+            bookings = newList;
+
+            // save updated list to local storage
+            saveBookings();
+
+            // refresh tablle to show changes
+            renderBookings();
+        }).catch(function(err){
+            console.error('Error during server cancellation operations:', err);
+            // Even if server ops failed, still update local UI to remove cancelled items to keep UX responsive
+            let fallbackList = [];
+            for(let j=0; j< bookings.length; j++){
+                let currentBooking = bookings[j];
+                if(currentBooking.status === "Past"){
+                    fallbackList.push(currentBooking);
+                    continue;
+                }
+                let keep = true;
+                for(let k=0; k< idsToRemove.length; k++){
+                    if(currentBooking.id === idsToRemove[k]){
+                        keep = false;
+                    }
+                }
+                if(keep) fallbackList.push(currentBooking);
             }
-        }
-
-        // replace old bookings list with new one
-        bookings = newList;
-
-        // save updated list to local storage
-        saveBookings();
-
-        // refresh tablle to show changes
-        renderBookings();
+            bookings = fallbackList;
+            saveBookings();
+            renderBookings();
+            alert('Some server-side cancellations failed. Check console for details.');
+        });
     })
 }
 

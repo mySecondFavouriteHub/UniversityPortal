@@ -170,19 +170,19 @@ window.onload = function() {
             var currentMinutes = now.getMinutes();
             var currentTimeInMinutes = currentHour *60 + currentMinutes;
 
-            var startMinutes = timeToMinutes(start);
+            var startMinutesToday = timeToMinutes(start);
 
-            if(startMinutes <= currentTimeInMinutes){
+            if(startMinutesToday <= currentTimeInMinutes){
                 alert("You cannot book a time that has already passed today");
                 return;
             }
         }
 
         // convert start and end time string
-        var startMinutes = timeToMinutes(start);
+        var startMinutesVal = timeToMinutes(start);
         var endMinutes = timeToMinutes(end);
 
-        if(endMinutes <=startMinutes){
+        if(endMinutes <= startMinutesVal){
             alert("End time must be after start time");
             return;
         }
@@ -191,10 +191,26 @@ window.onload = function() {
         var selectedOption = resourceSelect.options[resourceSelect.selectedIndex];
         var resourceId = selectedOption.getAttribute("data-id");
 
+        // validate resourceId
+        if(!resourceId || isNaN(Number(resourceId))){
+            alert('Selected resource is invalid. Please choose a different resource.');
+            return;
+        }
+
         // load existing bookings
         var bookings = loadBookingForAdd();
 
-        // create new booking object
+        // get current logged-in user from sessionStorage
+        var storedUser = sessionStorage.getItem('currentUser');
+        if(!storedUser){
+            alert('You must be logged in to make a booking. Please log in first.');
+            window.location.href = '../login_page.html';
+            return;
+        }
+        var currentUser = JSON.parse(storedUser);
+        var username = currentUser.username;
+
+        // create new booking object for local UI storage
         var newBooking = {
             id: new Date().getTime(),
             resource: resource,
@@ -202,96 +218,50 @@ window.onload = function() {
             start: start, 
             end: end,
             status: "Future", // new bookings are future
-            resourceId: resourceId
+            resourceId: resourceId,
+            username: username
         };
 
-        // function to check if chosen resource is a lab, room or equipment use string 
-        if(resource.includes("Lab")){
-
-            // PUT to labs booking API
-            fetch(API_BASE + "/admin/labs", {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    id: resourceId,
-                    available: false
-                })
+        // POST a booking request to the server for all resource types
+        fetch(API_BASE + "/api/requests", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                resource_id: Number(resourceId),
+                username: username
             })
-            .then(function(res){ return res.json(); })
-            .then(function(data){
-                console.log("Lab booking saved:", data);
-                
-                // add new booking to the list
-                bookings.push(newBooking);
-                saveBookingForAdd(bookings);
+        })
+        .then(function(res){
+            if(!res.ok){
+                return res.json().then(function(err){ throw err; });
+            }
+            return res.json();
+        })
+        .then(function(data){
+            console.log("Request created:", data);
 
-                alert("Lab booking confirmed!");
-                window.location.href = "mainPage.html";
-            })
-            .catch(function(err){
-                console.error("Error saving lab booking:", err);
-                alert("Failed to save lab booking");
-            });
-        }
-        else if(resource.includes("Room")){
-            
-            // PUT to rooms booking API
-            fetch(API_BASE + "/admin/rooms", {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    id: resourceId,
-                    available: false
-                })
-            })
-            .then(function(res){ return res.json(); })
-            .then(function(data){
-                console.log("Room booking saved:", data);
+            // attach backend request id to local booking (if provided)
+            if (data && data.id) {
+                newBooking.requestId = data.id;
+            } else {
+                // server didn't return insert id; still proceed but cancellation will not remove server-side request
+                newBooking.requestId = null;
+            }
++
+            // add new booking to the list (local UI storage)
+            bookings.push(newBooking);
+            saveBookingForAdd(bookings);
 
-                // add new booking to the list
-                bookings.push(newBooking);
-                saveBookingForAdd(bookings);
+            alert("Booking request submitted!");
+            window.location.href = "mainPage.html";
+        })
+        .catch(function(err){
+            console.error("Error creating booking request:", err);
+            alert("Failed to submit booking request. Please try again.");
+        });
 
-                alert("Room booking confirmed!");
-                window.location.href = "mainPage.html";
-            })
-            .catch(function(err){
-                console.error("Error saving room booking:", err);
-                alert("Failed to save room booking");
-            });
-        }
-        else if(resource.includes("Equipment")){
 
-            // PUT to equipment booking API
-            fetch(API_BASE + "/admin/equipment", {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    id: resourceId,
-                    available: false
-                })
-            })
-            .then(function(res){ return res.json(); })
-            .then(function(data){
-                console.log("Equipment booking saved:", data);
-
-                // add new booking to the list
-                bookings.push(newBooking);
-                saveBookingForAdd(bookings);
-                
-                alert("Equipment booking confirmed!");
-                window.location.href = "mainPage.html";
-            })
-            .catch(function(err){
-                console.error("Error saving equipment booking:", err);
-                alert("Failed to save equipment booking");
-            });
-        }
     });
 };
