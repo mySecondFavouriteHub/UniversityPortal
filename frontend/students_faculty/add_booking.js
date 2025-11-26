@@ -179,13 +179,14 @@ window.onload = function() {
             date: date,
             start: start, 
             end: end,
-            status: "Future" // new bookings are future
+            status: "Future", // new bookings are future
+            available: false
         };
 
         // function to check if chosen resource is a lab, room or equipment use string 
         if(resource.includes("Lab")){
 
-            // POST to labs booking API
+            // PUT to labs booking API
             fetch(API_BASE + "/admin/labs", {
                 method: "PUT",
                 headers: {
@@ -211,7 +212,7 @@ window.onload = function() {
         }
         else if(resource.includes("Room")){
             
-            // POST to rooms booking API
+            // PUT to rooms booking API
             fetch(API_BASE + "/admin/rooms", {
                 method: "PUT",
                 headers: {
@@ -237,7 +238,7 @@ window.onload = function() {
         }
         else if(resource.includes("Equipment")){
 
-            // POST to equipment booking API
+            // PUT to equipment booking API
             fetch(API_BASE + "/admin/equipment", {
                 method: "PUT",
                 headers: {

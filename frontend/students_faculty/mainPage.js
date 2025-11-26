@@ -174,11 +174,11 @@ function setupCancelButton(){
                 endpoint = "/admin/equipment";
             }
 
-            // send delete or post request 
+            // send PUT request 
             fetch(API_BASE + endpoint, {
                 method: "PUT",
                 headers: {
-                    "Content-Type": "aplication/json"
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify(booking)
             })
