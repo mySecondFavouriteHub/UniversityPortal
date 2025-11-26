@@ -253,6 +253,27 @@ server.put('/admin/:resource', (req, res) => {
 
 });
 
+server.delete('/admin/:resource', (req, res) => {
+   const { id } = req.body;
+
+   if (!id || !utils.isNumeric(id)) {
+      res.status(400).json({ error: 'Valid id is required' });
+      return;
+   }
+
+   db.delete({
+      table: req.table_name,
+      filters: {
+         id: Number(id),
+         type: req.resource_type
+      }
+   }).then(() => {
+      res.json({ success: 'Resource deleted successfully' });
+   }).catch(err => {
+      res.status(500).json({ error: err });
+   });
+});
+
 //static
 server.use(express.static('../frontend'));
 

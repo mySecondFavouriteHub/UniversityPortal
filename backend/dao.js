@@ -35,14 +35,6 @@ module.exports = class {
         return this.#query(`${statement} WHERE ${filters};`);
     }
     /*
-    Delete from database (filters REQUIRED)
-     */
-    delete(params) {
-        //Construct the WHERE clause
-        const filters = utils.joinObject(params.filters,' = ',' AND ');
-        return this.#query(`DELETE FROM ${params.table} WHERE ${filters};`);
-    }
-    /*
     Update an entry in database
      */
     update(params) {
@@ -59,5 +51,16 @@ module.exports = class {
         const statement = `UPDATE ${table} SET ${setClause} WHERE ${whereClause}`;
 
         return this.#query(statement, [...setValues, ...whereValues]);
+    }
+    /*
+    DELETE
+     */
+    delete(params) {
+        const { table, filters } = params;
+        const keys = Object.keys(filters);
+        const whereClause = keys.map(k => `${k} = ?`).join(' AND ');
+        const values = keys.map(k => filters[k]);
+        const statement = `DELETE FROM ${table} WHERE ${whereClause}`;
+        return this.#query(statement, values);
     }
 }
