@@ -220,6 +220,38 @@ server.post('/admin/:resource',(request,response)=>{
       response.status(500).json({error: err})
    });
 });
+/*
+PUT (UPDATE)
+ */
+server.put('/admin/:resource', (req, res) => {
+   const { id, name, location, available } = req.body;
+
+   if (!id || !utils.isNumeric(id)) {
+      res.status(400).json({ error: 'Valid id is required' });
+      return;
+   }
+
+   const columns = {};
+   if (name !== undefined) columns.name = name;
+   if (location !== undefined) columns.location = location;
+   if (available !== undefined) columns.available = available;
+
+   const filters = {
+      id: Number(id),
+      type: req.resource_type
+   };
+
+   db.update({
+      table: req.table_name,
+      columns,
+      filters
+   }).then(() => {
+      res.json({ success: 'Resource updated successfully' });
+   }).catch(err => {
+      res.status(500).json({ error: err });
+   });
+
+});
 
 //static
 server.use(express.static('../frontend'));

@@ -42,4 +42,22 @@ module.exports = class {
         const filters = utils.joinObject(params.filters,' = ',' AND ');
         return this.#query(`DELETE FROM ${params.table} WHERE ${filters};`);
     }
+    /*
+    Update an entry in database
+     */
+    update(params) {
+        const {table,columns,filters} = params;
+
+        const setKeys = Object.keys(columns);
+        const setClause = setKeys.map(key => `${key} = ?`).join(', ');
+        const setValues = setKeys.map(key => columns[key]);
+
+        const filterKeys = Object.keys(filters);
+        const whereClause = filterKeys.map(key => `${key} = ?`).join(' AND ');
+        const whereValues = filterKeys.map(key => filters[key]);
+
+        const statement = `UPDATE ${table} SET ${setClause} WHERE ${whereClause}`;
+
+        return this.#query(statement, [...setValues, ...whereValues]);
+    }
 }
