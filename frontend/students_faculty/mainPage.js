@@ -227,9 +227,35 @@ function setupCancelButton(){
     })
 }
 
+// function to load user's name
+function loadUserName(){
+    var currentUserStr = sessionStorage.getItem('currentUser');
+
+    var currentUser = JSON.parse(currentUserStr);
+    var username = currentUser.username;
+
+    fetch(API_BASE + "/api/users/" + username)
+    .then(function(res){ return res.json();})
+    .then(function(userData){
+        // update header with users first name
+        var header = document.querySelector("header h1");
+        header.textContent = "Welcome " + userData.firstName + "!";
+
+        // update session storage with fresh data in case name was edited
+        sessionStorage.setItem('currentUser', JSON.stringify(userData));
+    })
+    .catch(function(err){
+        console.error("Error loading user data:", err);
+        // fallback to whatever name we have
+        var header = document.querySelector("header h1");
+            header.texContent = "Welcome " + currentUser.firstName + "!"; 
+    });
+}
+
 // run when page loads
 window.onload = function(){
     loadBookings();
     renderBookings();
     setupCancelButton();
+    loadUserName();
 }
