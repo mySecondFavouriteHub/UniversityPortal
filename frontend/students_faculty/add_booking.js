@@ -67,14 +67,17 @@ function loadResourcesByCategory(category){
             if(category === "labs"){
                 opt.value = "Lab: " + item.name;
                 opt.textContent = item.name + " (" + item.location + ")";
+                opt.setAttribute("data-id", item.id);
             }
             else if (category === "rooms"){
                 opt.value = "Room: " + item.name;
                 opt.textContent = item.name + " (" + item.location + ")";
+                opt.setAttribute("data-id", item.id);
             }
             else if(category === "equipment"){
                 opt.value = "Equipment: " + item.name;
                 opt.textContent = item.name + " (" + item.location + ")";
+                opt.setAttribute("data-id", item.id);
             }
 
             // if not available, disable
@@ -128,7 +131,7 @@ window.onload = function() {
 
 
     // when category changes, load resources for that category
-    var categorySelect = this.document.getElementById("category");
+    var categorySelect = document.getElementById("category");
     categorySelect.onchange =function(){
         var category = categorySelect.value;
         loadResourcesByCategory(category);
@@ -160,6 +163,21 @@ window.onload = function() {
             return;
         }
 
+        // check if booking time is in the past when tade it today
+        if(date === todayString){
+            var now = new Date();
+            var currentHour = now.getHours();
+            var currentMinutes = now.getMinutes();
+            var currentTimeInMinutes = currentHour *60 + currentMinutes;
+
+            var startMinutes = timeToMinutes(start);
+
+            if(startMinutes <= currentTimeInMinutes){
+                alert("You cannot book a time that has already passed today");
+                return;
+            }
+        }
+
         // convert start and end time string
         var startMinutes = timeToMinutes(start);
         var endMinutes = timeToMinutes(end);
@@ -168,6 +186,10 @@ window.onload = function() {
             alert("End time must be after start time");
             return;
         }
+
+        var resourceSelect = document.getElementById("resource");
+        var selectedOption = resourceSelect.options[resourceSelect.selectedIndex];
+        var resourceId = selectedOption.getAttribute("data-id");
 
         // load existing bookings
         var bookings = loadBookingForAdd();
@@ -180,7 +202,7 @@ window.onload = function() {
             start: start, 
             end: end,
             status: "Future", // new bookings are future
-            available: false
+            resourceId: resourceId
         };
 
         // function to check if chosen resource is a lab, room or equipment use string 
@@ -192,7 +214,10 @@ window.onload = function() {
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify(newBooking)
+                body: JSON.stringify({
+                    id: resourceId,
+                    available: false
+                })
             })
             .then(function(res){ return res.json(); })
             .then(function(data){
@@ -218,7 +243,10 @@ window.onload = function() {
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify(newBooking)
+                body: JSON.stringify({
+                    id: resourceId,
+                    available: false
+                })
             })
             .then(function(res){ return res.json(); })
             .then(function(data){
@@ -244,7 +272,10 @@ window.onload = function() {
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify(newBooking)
+                body: JSON.stringify({
+                    id: resourceId,
+                    available: false
+                })
             })
             .then(function(res){ return res.json(); })
             .then(function(data){

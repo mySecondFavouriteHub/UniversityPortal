@@ -26,8 +26,8 @@ function saveBookings(){
     localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings));
 }
 
-// helper function chekcs if booking date is in the past
-function isPastBooking(dateStr){
+//  function chekcs if booking date is in the past
+function isPastBooking(booking){
     var today = new Date();
     var year = today.getFullYear();
     var month = today.getMonth()+1// 1-12
@@ -50,8 +50,28 @@ function isPastBooking(dateStr){
 
     var todayString = year + "-"+ month + "-" + day;
 
-    // compare strings in yyy-mm-dd format
-    return dateStr < todayString;
+    // if booking date before today, set to past
+    if(booking.date < todayString){
+        return true;
+    }
+
+    // if booking date is today, check end time
+    if(booking.date ===todayString){
+        var currentHour = today.getHours();
+        var currentMinute = today.getMinutes();
+        var currentTimeInMinutes = currentHour*60 + currentMinute;
+
+        var endParts = booking.end.split(":");
+        var endHour = parseInt(endParts[0]);
+        var endMinutes = parseInt(endParts[1]);
+        var endTimeInMinutes = endHour*60 + endMinutes;
+
+        // if end time has passed, booking is past 
+        if(endTimeInMinutes < currentTimeInMinutes){
+            return true;
+        }
+    }
+    return false;
 }
 
 // display all bookings as rows inside table body
@@ -63,7 +83,7 @@ function renderBookings(){
 
     // update status past future for each booking
     for(var k=0; k< bookings.length; k++){
-        if(isPastBooking(bookings[k].date)){
+        if(isPastBooking(bookings[k])){
             bookings[k].status = "Past";
         }
         else{
@@ -174,13 +194,16 @@ function setupCancelButton(){
                 endpoint = "/admin/equipment";
             }
 
-            // send PUT request 
+            // send PUT request to mark resource as available again
             fetch(API_BASE + endpoint, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify(booking)
+                body: JSON.stringify({
+                    id: booking.resourceId,
+                    available: true
+                })
             })
             .then(function(res){ return res.json();})
             .then(function(data){
@@ -254,8 +277,8 @@ function loadUserName(){
 
 // run when page loads
 window.onload = function(){
+    loadUserName();
     loadBookings();
     renderBookings();
     setupCancelButton();
-    loadUserName();
 }
