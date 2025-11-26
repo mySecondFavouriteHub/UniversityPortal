@@ -107,55 +107,84 @@
 <footer class="footer"><h3>footer</h3></footer>
 
 <script>
-  const KEY = 'crms-items';
+  const API_BASE = 'http://localhost:8000';
+
   const params = new URLSearchParams(location.search);
   const type = params.get('type') || 'resource';
-  const humanType = {study:'Study Room', lab:'Lab Room', equipment:'Equipment'}[type] || 'Resource';
 
+  const humanTypeMap = {
+    study: 'Study Room',
+    lab: 'Lab Room',
+    equipment: 'Equipment'
+  };
+  const humanType = humanTypeMap[type] || 'Resource';
+
+  // Update headings
   document.getElementById('portal-title').textContent = `Create ${humanType}`;
   document.getElementById('title').textContent = `Create ${humanType}`;
 
+  // Show capacity only for study rooms and labs
   const capacityWrap = document.getElementById('capacityWrap');
-  if (type === 'study' || type === 'lab') capacityWrap.style.display = '';
-
-  function getItems(){
-    try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e){ return []; }
-  }
-  function setItems(arr){ localStorage.setItem(KEY, JSON.stringify(arr)); }
-
-  function makeId(prefix){
-    const t = Date.now().toString(36);
-    const r = Math.random().toString(36).slice(2,6);
-    return `${prefix}-${t}${r}`;
+  if (type === 'study' || type === 'lab') {
+    capacityWrap.style.display = '';
   }
 
-  document.getElementById('saveBtn').addEventListener('click', ()=>{
-    const name = document.getElementById('name').value.trim();
-    const locationText = document.getElementById('location').value.trim();
-    const availability = document.getElementById('availability').value;
-    const capacityVal = document.getElementById('capacity')?.value;
+  function resourcePathFromType(t) {
+    if (t === 'study') return 'rooms';      // study rooms live in "rooms" category
+    if (t === 'lab') return 'labs';
+    if (t === 'equipment') return 'equipment';
+    return 'rooms';
+  }
 
-    if (!name || !locationText || !availability){
-      alert('Please fill all required fields.');
+  async function handleCreate() {
+    const nameEl = document.getElementById('name');
+    const locationEl = document.getElementById('location');
+    const availabilityEl = document.getElementById('availability');
+
+    const name = nameEl.value.trim();
+    const location = locationEl.value.trim();
+    const availability = availabilityEl.value;
+
+    if (!name || !location || !availability) {
+      alert('Please fill in all required fields.');
       return;
     }
 
-    const items = getItems();
-    const id = makeId(type);
-    const obj = { id, type, name, location: locationText, availability };
+    const availableBool = availability === 'available';
 
-    if (type === 'study' || type === 'lab'){
-      const c = capacityVal !== '' ? Number(capacityVal) : null;
-      if (!c || c < 1){ alert('Please provide a valid capacity.'); return; }
-      obj.capacity = c;
+    const payload = {
+      name,
+      location,
+      available: String(availableBool)
+    };
+
+    const path = resourcePathFromType(type);
+
+    try {
+      const res = await fetch(`${API_BASE}/admin/${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        console.error('Create failed', await res.text());
+        alert('Error creating resource. Please check the backend.');
+        return;
+      }
+
+      alert('Resource created successfully.');
+      location.href = 'modify.html';
+    } catch (err) {
+      console.error(err);
+      alert('Network error creating resource.');
     }
+  }
 
-    items.push(obj);
-    setItems(items);
+  document.getElementById('saveBtn').addEventListener('click', handleCreate);
+  document.getElementById('cancelBtn').addEventListener('click', () => {
     location.href = 'modify.html';
   });
-
-  document.getElementById('cancelBtn').addEventListener('click', ()=> location.href = 'modify.html');
 </script>
 <script src="manage-profile.js"></script>
 </body>
