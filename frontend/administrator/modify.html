@@ -81,15 +81,10 @@
         <div class="resource-box">
           <div class="resource-title">Study Rooms</div>
           <div class="resource-content">
-            <ul class="resource-list">
-              <li><a class="resource-link" href="edit.html?id=study-01"><strong>Study Room 01</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
-              <li><a class="resource-link" href="edit.html?id=study-02"><strong>Study Room 02</strong><span style="flex:1;"></span><span class="badge avail-no">Unavailable</span></a></li>
-              <li><a class="resource-link" href="edit.html?id=study-03"><strong>Study Room 03</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
-              <li><a class="resource-link" href="edit.html?id=study-04"><strong>Study Room 04</strong><span style="flex:1;"></span><span class="badge avail-no">Unavailable</span></a></li>
-              <li><a class="resource-link" href="edit.html?id=study-05"><strong>Study Room 05</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
-              <li><a class="resource-link" href="edit.html?id=study-06"><strong>Study Room 06</strong><span style="flex:1;"></span><span class="badge avail-no">Unavailable</span></a></li>
-              <li><a class="resource-link" href="edit.html?id=study-07"><strong>Study Room 07</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
-            </ul>
+
+            <ul class="resource-list" id="study-list">
+  <!-- Filled by JavaScript -->
+</ul>
           </div>
           <button class="resource-button" type="button" onclick="goCreate('study')">+</button>
         </div>
@@ -98,15 +93,10 @@
         <div class="resource-box">
           <div class="resource-title">Labs</div>
           <div class="resource-content">
-            <ul class="resource-list">
-              <li><a class="resource-link" href="edit.html?id=lab-01"><strong>Lab Room 01</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
-              <li><a class="resource-link" href="edit.html?id=lab-02"><strong>Lab Room 02</strong><span style="flex:1;"></span><span class="badge avail-no">Unavailable</span></a></li>
-              <li><a class="resource-link" href="edit.html?id=lab-03"><strong>Lab Room 03</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
-              <li><a class="resource-link" href="edit.html?id=lab-04"><strong>Lab Room 04</strong><span style="flex:1;"></span><span class="badge avail-no">Unavailable</span></a></li>
-              <li><a class="resource-link" href="edit.html?id=lab-05"><strong>Lab Room 05</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
-              <li><a class="resource-link" href="edit.html?id=lab-06"><strong>Lab Room 06</strong><span style="flex:1;"></span><span class="badge avail-no">Unavailable</span></a></li>
-              <li><a class="resource-link" href="edit.html?id=lab-07"><strong>Lab Room 07</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
-            </ul>
+
+            <ul class="resource-list" id="lab-list">
+  <!-- Filled by JavaScript -->
+</ul>
           </div>
           <button class="resource-button" type="button" onclick="goCreate('lab')">+</button>
         </div>
@@ -115,20 +105,10 @@
         <div class="resource-box equipment-box">
           <div class="resource-title">Equipment</div>
           <div class="resource-content">
-            <ul class="resource-list">
-              <li><a class="resource-link" href="edit.html?id=eq-saw">
-                <img class="thumb" alt="" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='100%' height='100%' fill='%23fafafa'/><rect x='6' y='28' width='48' height='8' fill='%237aa2f7'/><polygon points='12,20 54,20 57,24 54,28 12,28' fill='%2394a3b8'/></svg>">
-                <strong>Saw</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
-              <li><a class="resource-link" href="edit.html?id=eq-3dp">
-                <img class="thumb" alt="" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='100%' height='100%' fill='%23fafafa'/><rect x='10' y='24' width='40' height='18' rx='4' fill='%2364748b'/><rect x='16' y='16' width='28' height='10' rx='3' fill='%2394a3b8'/></svg>">
-                <strong>3D Printer</strong><span style="flex:1;"></span><span class="badge avail-no">Unavailable</span></a></li>
-              <li><a class="resource-link" href="edit.html?id=eq-laser">
-                <img class="thumb" alt="" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='100%' height='100%' fill='%23fafafa'/><rect x='8' y='24' width='44' height='18' fill='%231f2937' stroke='%23eab308'/><rect x='8' y='18' width='44' height='6' fill='%23eab308'/></svg>">
-                <strong>Laser Engraver</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
-              <li><a class="resource-link" href="edit.html?id=eq-scope">
-                <img class="thumb" alt="" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='100%' height='100%' fill='%23fafafa'/><circle cx='16' cy='20' r='6' fill='%2360a5fa'/><rect x='22' y='18' width='24' height='6' fill='%2393c5fd'/></svg>">
-                <strong>Telescope</strong><span style="flex:1;"></span><span class="badge avail-yes">Available</span></a></li>
-            </ul>
+
+            <ul class="resource-list" id="equipment-list">
+  <!-- Filled by JavaScript -->
+</ul>
           </div>
           <button class="resource-button" type="button" onclick="goCreate('equipment')">+</button>
         </div>
@@ -140,7 +120,68 @@
 <footer class="footer"><h3>footer</h3></footer>
 
 <script>
-  function goCreate(type){ location.href = `create.html?type=${encodeURIComponent(type)}`; }
+  const API_BASE = 'http://localhost:8000';
+
+  function goCreate(type){
+    location.href = `create.html?type=${encodeURIComponent(type)}`;
+  }
+
+  function createListItem(resource, typeKey) {
+    const li = document.createElement('li');
+    li.className = 'resource-item';
+
+    const available = !!resource.available;
+    const availClass = available ? 'avail-yes' : 'avail-no';
+    const availText = available ? 'Available' : 'Unavailable';
+
+    li.innerHTML = `
+      <a class="resource-link"
+         href="edit.html?type=${encodeURIComponent(typeKey)}&id=${encodeURIComponent(resource.id)}">
+        <div class="thumb" aria-hidden="true"></div>
+        <strong>${resource.name}</strong>
+        <span style="flex:1;"></span>
+        <span class="badge ${availClass}">${availText}</span>
+      </a>
+    `;
+    return li;
+  }
+
+  async function loadCategory(typeKey, ulId, resourcePath) {
+    const listEl = document.getElementById(ulId);
+    if (!listEl) return;
+    listEl.innerHTML = '<li>Loading…</li>';
+
+    try {
+      const res = await fetch(`${API_BASE}/admin/${resourcePath}`);
+      if (!res.ok) {
+        listEl.innerHTML = '<li>Failed to load.</li>';
+        return;
+      }
+      const items = await res.json();
+      listEl.innerHTML = '';
+      if (!items.length) {
+        listEl.innerHTML = '<li>No resources found.</li>';
+        return;
+      }
+      for (const r of items) {
+        listEl.appendChild(createListItem(r, typeKey));
+      }
+    } catch (err) {
+      console.error(err);
+      listEl.innerHTML = '<li>Network error.</li>';
+    }
+  }
+
+  function initResourceLists(){
+    // Study Rooms
+    loadCategory('study', 'study-list', 'rooms');
+    // Labs
+    loadCategory('lab', 'lab-list', 'labs');
+    // Equipment
+    loadCategory('equipment', 'equipment-list', 'equipment');
+  }
+
+  window.addEventListener('DOMContentLoaded', initResourceLists);
 </script>
 <script src="manage-profile.js"></script>
 </body>

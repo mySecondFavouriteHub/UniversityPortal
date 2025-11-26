@@ -130,90 +130,134 @@
 <footer class="footer"><h3>footer</h3></footer>
 
 <script>
-  // --- Hard-coded items to match modify.html ---
-  const SVG = {
-    saw: `data:image/svg+xml;utf8,`+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='100%' height='100%' fill='#fafafa'/><rect x='6' y='28' width='48' height='8' fill='#7aa2f7'/><polygon points='12,20 54,20 57,24 54,28 12,28' fill='#94a3b8'/></svg>`),
-    printer: `data:image/svg+xml;utf8,`+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='100%' height='100%' fill='#fafafa'/><rect x='10' y='24' width='40' height='18' rx='4' fill='#64748b'/><rect x='16' y='16' width='28' height='10' rx='3' fill='#94a3b8'/></svg>`),
-    engraver: `data:image/svg+xml;utf8,`+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='100%' height='100%' fill='#fafafa'/><rect x='8' y='24' width='44' height='18' fill='#1f2937' stroke='#eab308'/><rect x='8' y='18' width='44' height='6' fill='#eab308'/></svg>`),
-    telescope: `data:image/svg+xml;utf8,`+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='100%' height='100%' fill='#fafafa'/><circle cx='16' cy='20' r='6' fill='#60a5fa'/><rect x='22' y='18' width='24' height='6' fill='#93c5fd'/></svg>`)
-  };
+  const API_BASE = 'http://localhost:8000';
 
-  const ITEMS = [
-    // Study Rooms 01–07
-    { id:'study-01', type:'study', name:'Study Room 01', location:'EV-6.100', capacity:4, availability:'available' },
-    { id:'study-02', type:'study', name:'Study Room 02', location:'EV-6.101', capacity:6, availability:'unavailable' },
-    { id:'study-03', type:'study', name:'Study Room 03', location:'EV-6.102', capacity:6, availability:'available' },
-    { id:'study-04', type:'study', name:'Study Room 04', location:'EV-6.103', capacity:8, availability:'unavailable' },
-    { id:'study-05', type:'study', name:'Study Room 05', location:'EV-6.104', capacity:4, availability:'available' },
-    { id:'study-06', type:'study', name:'Study Room 06', location:'EV-6.105', capacity:6, availability:'unavailable' },
-    { id:'study-07', type:'study', name:'Study Room 07', location:'EV-6.106', capacity:8, availability:'available' },
-
-    // Labs 01–07
-    { id:'lab-01', type:'lab', name:'Lab Room 01', location:'EV-5.210', capacity:12, availability:'available' },
-    { id:'lab-02', type:'lab', name:'Lab Room 02', location:'EV-5.211', capacity:18, availability:'unavailable' },
-    { id:'lab-03', type:'lab', name:'Lab Room 03', location:'EV-5.212', capacity:18, availability:'available' },
-    { id:'lab-04', type:'lab', name:'Lab Room 04', location:'EV-5.213', capacity:24, availability:'unavailable' },
-    { id:'lab-05', type:'lab', name:'Lab Room 05', location:'EV-5.214', capacity:12, availability:'available' },
-    { id:'lab-06', type:'lab', name:'Lab Room 06', location:'EV-5.215', capacity:18, availability:'unavailable' },
-    { id:'lab-07', type:'lab', name:'Lab Room 07', location:'EV-5.216', capacity:24, availability:'available' },
-
-    // Equipment
-    { id:'eq-saw',   type:'equipment', name:'Saw',            location:'Tool Crib A',    availability:'available',   imageData: SVG.saw },
-    { id:'eq-3dp',   type:'equipment', name:'3D Printer',     location:'Prototyping Lab', availability:'unavailable', imageData: SVG.printer },
-    { id:'eq-laser', type:'equipment', name:'Laser Engraver', location:'Fab Lab',        availability:'available',   imageData: SVG.engraver },
-    { id:'eq-scope', type:'equipment', name:'Telescope',      location:'Roof Deck',       availability:'available',   imageData: SVG.telescope },
-  ];
-
-  // Load item by ?id=
-  const params = new URLSearchParams(location.search);
-  const id = params.get('id');
-  const item = ITEMS.find(x => x.id === id);
-
-  // If not found, stay on this page but show a simple message instead of bouncing back
-  if (!item) {
-    document.getElementById('portal-title').textContent = 'Resource not found';
+  function getQueryParams() {
+    const params = new URLSearchParams(location.search);
+    return {
+      type: params.get('type') || 'resource',  // 'study' | 'lab' | 'equipment'
+      id: params.get('id')
+    };
   }
 
-  // Fill UI
-  const nameEl = document.getElementById('name');
-  const locationEl = document.getElementById('location');
-  const capacityWrap = document.getElementById('capacityWrap');
-  const capacityEl = document.getElementById('capacity');
-  const availabilityEl = document.getElementById('availability');
-  const imageWrap = document.getElementById('imageWrap');
-  const imgPreview = document.getElementById('imgPreview');
+  function resourcePathFromType(type) {
+    if (type === 'study') return 'rooms';
+    if (type === 'lab') return 'labs';
+    if (type === 'equipment') return 'equipment';
+    return 'rooms';
+  }
 
-  if (item){
-    nameEl.value = item.name || '';
-    locationEl.value = item.location || '';
-    availabilityEl.value = item.availability || '';
+  async function loadResource() {
+    const { type, id } = getQueryParams();
+    if (!id) {
+      alert('Missing id in URL.');
+      return;
+    }
 
-    if (item.type === 'equipment'){
-      imageWrap.style.display = '';
-      if (item.imageData){
-        imgPreview.innerHTML = `<img src="${item.imageData}" alt=""><span>Current image</span>`;
+    const path = resourcePathFromType(type);
+
+    try {
+      const res = await fetch(`${API_BASE}/admin/${path}?id=${encodeURIComponent(id)}`);
+      if (!res.ok) {
+        console.error('Failed to fetch resource', await res.text());
+        alert('Error loading resource.');
+        return;
       }
-    } else {
-      capacityWrap.style.display = '';
-      if (typeof item.capacity !== 'undefined') capacityEl.value = item.capacity;
-    }
 
-    const humanType = { study:'Study Room', lab:'Lab Room', equipment:'Equipment' }[item.type] || 'Resource';
-    const titleEl = document.getElementById('title');
-    const bandEl  = document.getElementById('portal-title');
-    function updateTitles(){
-      titleEl.textContent = `Modifying ${nameEl.value || humanType}`;
-      bandEl.textContent  = nameEl.value || '';
+      const data = await res.json();
+      const resource = Array.isArray(data) ? data[0] : data;
+
+      if (!resource) {
+        alert('Resource not found.');
+        return;
+      }
+
+      document.getElementById('name').value = resource.name || '';
+      document.getElementById('location').value = resource.location || '';
+      document.getElementById('availability').value =
+        resource.available ? 'available' : 'unavailable';
+
+      // capacity is not stored in DB; we keep that field hidden / unused
+    } catch (err) {
+      console.error(err);
+      alert('Network error loading resource.');
     }
-    updateTitles();
-    nameEl.addEventListener('input', updateTitles);
   }
 
-  // Buttons just go back (no persistence required for this hard-coded version)
-  function back(){ location.href = 'modify.html'; }
-  document.getElementById('saveBtn').addEventListener('click', back);
-  document.getElementById('discardBtn').addEventListener('click', back);
-  document.getElementById('deleteBtn').addEventListener('click', back);
+  async function saveResource() {
+    const { type, id } = getQueryParams();
+    const path = resourcePathFromType(type);
+
+    const name = document.getElementById('name').value.trim();
+    const location = document.getElementById('location').value.trim();
+    const availability = document.getElementById('availability').value;
+
+    if (!name || !location || !availability) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    const availableBool = availability === 'available';
+
+    try {
+      const res = await fetch(`${API_BASE}/admin/${path}?id=${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          location,
+          available: String(availableBool)
+        })
+      });
+
+      if (!res.ok) {
+        console.error('Update failed', await res.text());
+        alert('Error updating resource.');
+        return;
+      }
+
+      alert('Resource updated successfully.');
+      location.href = 'modify.html';
+    } catch (err) {
+      console.error(err);
+      alert('Network error updating resource.');
+    }
+  }
+
+  async function deleteResource() {
+    const { type, id } = getQueryParams();
+    const path = resourcePathFromType(type);
+
+    if (!confirm('Are you sure you want to delete this resource?')) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/admin/${path}?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE'
+      });
+
+      if (!res.ok) {
+        console.error('Delete failed', await res.text());
+        alert('Error deleting resource.');
+        return;
+      }
+
+      alert('Resource deleted.');
+      location.href = 'modify.html';
+    } catch (err) {
+      console.error(err);
+      alert('Network error deleting resource.');
+    }
+  }
+
+  function discardChanges() {
+    location.href = 'modify.html';
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', saveResource);
+  document.getElementById('discardBtn').addEventListener('click', discardChanges);
+  document.getElementById('deleteBtn').addEventListener('click', deleteResource);
+
+  window.addEventListener('DOMContentLoaded', loadResource);
 </script>
 <script src="manage-profile.js"></script>
 </body>
