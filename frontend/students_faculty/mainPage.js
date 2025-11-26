@@ -271,7 +271,7 @@ function loadUserName(){
         console.error("Error loading user data:", err);
         // fallback to whatever name we have
         var header = document.querySelector("header h1");
-            header.texContent = "Welcome " + currentUser.firstName + "!"; 
+            header.textContent = "Welcome " + currentUser.firstName + "!"; 
     });
 }
 

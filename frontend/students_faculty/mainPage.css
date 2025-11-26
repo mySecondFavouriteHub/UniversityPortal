@@ -104,3 +104,11 @@ table, td{
 .bookingChange:hover{
     background-color: #f4f4f4;
 }
+
+.modify-note {
+    font-size: 14px;
+    color: #912338; /* XX RED color matching your theme */
+    margin-top: 10px;
+    text-align: right;
+    font-style: italic;
+}
