@@ -21,16 +21,17 @@
     
     <main class="add-booking-content">
         <form id="booking-form">
+            <h3>Select Category</h3>
+            <select id="category" required>
+                <option value="" disabled selected>Select a category</option>
+                <option value="labs">Labs</option>
+                <option value="rooms">Rooms</option>
+                <option value="equipment">Equipment</option>
+            </select>
+
             <h3>What would you like to book?</h3>
             <select id="resource" required>
-                <option value="" disabled selected>Select a resource</option>
-                <option>Study Room A</option>
-                <option>Study Room B</option>
-                <option>Study Room C</option>
-                <option>Laptop</option>
-                <option>Laptop Charger</option>
-                <option>Iphone Charger</option>
-                <option>Android Charger</option>
+                <option value="" disabled selected>Select a category first</option>
             </select>
 
             <h3>When do you want to book?</h3>

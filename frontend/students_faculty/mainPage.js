@@ -1,6 +1,9 @@
 // store bookings in Local Storage
 var BOOKINGS_KEY = "studentBookings";
 
+// base URL for backend API
+var API_BASE = "http://localhost:8000";
+
 // array that will hold all bookings in memory
 var bookings = [];
 
@@ -50,6 +53,7 @@ function isPastBooking(dateStr){
     // compare strings in yyy-mm-dd format
     return dateStr < todayString;
 }
+
 // display all bookings as rows inside table body
 function renderBookings(){
     var tbody = document.getElementById("booking-body");
@@ -128,6 +132,7 @@ function setupCancelButton(){
         // get all checkboxes
         var checkboxes = document.getElementsByClassName("select-booking");
         var idsToRemove = [];
+        var bookingsToCancel = [];
 
         // go through all checkboxes and collect ids
         for(var i=0; i< checkboxes.length; i++){
@@ -135,6 +140,14 @@ function setupCancelButton(){
                 var idStr = checkboxes[i].getAttribute("data-id");
                 var idNum = parseInt(idStr);
                 idsToRemove.push(idNum);
+
+                // find booking object
+                for(var j=0; j< bookings.length; j++){
+                    if(bookings[j].id ===idNum){
+                        bookingsToCancel.push(bookings[j]);
+                        break;
+                    }
+                }
             }
         }
 
@@ -142,6 +155,40 @@ function setupCancelButton(){
         if(idsToRemove.length===0){
             alert("Please select at least one booking to cancel.");
             return;
+        }
+
+        // send cancellation to backend for each booking
+        for(var m=0; m< bookingsToCancel.length; m++){
+            var booking = bookingsToCancel[m];
+            var resource = booking.resource;
+            var endpoint = "";
+
+            // figure out which endpoint based on resource type
+            if(resource.includes("Lab")){
+                endpoint = "/admin/labs";
+            }
+            else if(resource.includes("Room")){
+                endpoint = "/admin/rooms";
+            }
+            else if(resource.includes("Equipment")){
+                endpoint = "/admin/equipment";
+            }
+
+            // send delete or post request 
+            fetch(API_BASE + endpoint, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "aplication/json"
+                },
+                body: JSON.stringify(booking)
+            })
+            .then(function(res){ return res.json();})
+            .then(function(data){
+                console.log("Booking cancelled in database:", data);
+            })
+            .catch(function(err){
+                console.error("Error cancelling booking:", err);
+            });
         }
 
         // build new list of bookings without ones we want to remove
@@ -154,7 +201,6 @@ function setupCancelButton(){
                 newList.push(currentBooking);
                 continue;
             }
-
 
             var keep = true;
             // check if this booking's id is in idsToRemove

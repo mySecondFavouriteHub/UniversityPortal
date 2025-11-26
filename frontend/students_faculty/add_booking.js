@@ -31,62 +31,70 @@ function timeToMinutes(timeStr){
     return hours*60 + minutes // convert to minutes 
 }
 
-// load available resources from backend
-function loadResources(){
-    var select = document.getElementById("resource");
+// load available resources based on selected category
+function loadResourcesByCategory(category){
+    var resourceSelect = document.getElementById("resource");
 
     // keep default option
-    select.innerHTML = '<option value="" disabled selected> Select a resource</option>';
+    resourceSelect.innerHTML = '<option value="" disabled selected> Select a resource</option>';
 
-    // labs
-    fetch(API_BASE + "/admin/labs")// call backend API
+    var endpoint = "";
+
+    // figure out which endpoint to 
+    if(category ==="labs"){
+        endpoint = "/admin/labs";
+    }
+    else if(category ==="rooms"){
+        endpoint = "/admin/rooms";
+    }
+    else if(category ==="equipment"){
+        endpoint="/admin/equipment";
+    }
+
+
+    // fetch from backend
+    fetch(API_BASE + endpoint)
     .then(function(res){return res.json();})// convert backend response into JS array
-    .then(function(labs){
-        // loop through all labs
-        for(var i = 0; i< labs.length; i++){
-            var lab = labs[i];
+    .then(function(items){
+        // reset dropdown
+        resourceSelect.innerHTML = '<option value="" disabled selected>Select a resource</option>';
+        // loop through all items and add all of them
+        for(var i = 0; i< items.length; i++){
+            var item = items[i];
             var opt = document.createElement("option");// create option tag for each
-            opt.value = "Lab: " + lab.name; // what gets saved
-            opt.textContent = "Lab - " + lab.name;// what user sees
-            select.appendChild(opt);
+           
+            // format value and text
+            if(category === "labs"){
+                opt.value = "Lab: " + item.name;
+                opt.textContent = item.name + " (" + item.location + ")";
+            }
+            else if (category === "rooms"){
+                opt.value = "Room: " + item.name;
+                opt.textContent = item.name + " (" + item.location + ")";
+            }
+            else if(category === "equipment"){
+                opt.value = "Equipment: " + item.name;
+                opt.textContent = item.name + " (" + item.location + ")";
+            }
+
+            // if not available, disable
+            if(item.available === 0 || item.available === false){
+                opt.disabled = true;
+                opt.className = "unavailable";
+                opt.textContent = opt.textContent + " - UNAVAILABLE";
+            }
+
+            resourceSelect.appendChild(opt);
+        }
+
+        // if no items found at all 
+        if(resourceSelect.options.length ===1){
+            resourceSelect.innerHTML = '<option value"" disabled selected> No resources found</option>';
         }
     })// handle error 
     .catch(function(err){
         console.error("Error loading labs:", err);
-    });
-
-    // rooms
-    fetch(API_BASE + "/admin/rooms")// call backend API
-    .then(function(res){return res.json();})// convert backend response into JS array
-    .then(function(rooms){
-        // loop through all rooms
-        for(var i = 0; i< rooms.length; i++){
-            var room = rooms[i];
-            var opt = document.createElement("option");// create option tag for each
-            opt.value = "Room: " + room.name;// what gets saved
-            opt.textContent = "Room - " + room.name;// what user sees
-            select.appendChild(opt);
-        }
-    })// handle error 
-    .catch(function(err){
-        console.error("Error loading rooms:", err);
-    });
-
-    // equipment
-    fetch(API_BASE + "/admin/equipment")// call backend API
-    .then(function(res){return res.json();})// convert backend response into JS array
-    .then(function(eqs){
-        // loop through all equipments
-        for(var i = 0; i< eqs.length; i++){
-            var eq = eqs[i];
-            var opt = document.createElement("option");// create option tag for each
-            opt.value = "Equipment: " + eq.name;// what gets saved
-            opt.textContent = "Equipment - " + eq.name;// what user sees
-            select.appendChild(opt);
-        }
-    })// handle error 
-    .catch(function(err){
-        console.error("Error loading equipments:", err);
+        resourceSelect.innerHTML = '<option value"" disabled selected> Error loading resources </option>';
     });
 }
 
@@ -118,8 +126,13 @@ window.onload = function() {
     var todayString = year + "-" + month + "-" + day; // final string
     dateInput.min = todayString; //set min allowed to current date
 
-    //load resources from backend into dropdown
-    loadResources();
+
+    // when category changes, load resources for that category
+    var categorySelect = this.document.getElementById("category");
+    categorySelect.onchange =function(){
+        var category = categorySelect.value;
+        loadResourcesByCategory(category);
+    }
 
     // get submit button
     var submitLink = document.getElementById("submit-booking");
@@ -129,13 +142,14 @@ window.onload = function() {
         event.preventDefault();// stop browser from going to main page directly, save data first
     
         // read values from form
+        var category = document.getElementById("category").value;
         var resource = document.getElementById("resource").value;
         var date = document.getElementById("date").value;
         var start = document.getElementById("start").value;
         var end = document.getElementById("end").value;
     
         // simple validation to make sure fields are not empty
-        if(!resource || !date || !start || !end){
+        if(!category || !resource || !date || !start || !end){
             alert("Please fill in all fields before submitting.");
             return;
         }
@@ -168,13 +182,84 @@ window.onload = function() {
             status: "Future" // new bookings are future
         };
 
-        // add new booking to the list
-        bookings.push(newBooking);
+        // function to check if chosen resource is a lab, room or equipment use string 
+        if(resource.includes("Lab")){
 
-        // save updated list into local Storage
-        saveBookingForAdd(bookings);
+            // POST to labs booking API
+            fetch(API_BASE + "/admin/labs", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(newBooking)
+            })
+            .then(function(res){ return res.json(); })
+            .then(function(data){
+                console.log("Lab booking saved:", data);
+                
+                // add new booking to the list
+                bookings.push(newBooking);
+                saveBookingForAdd(bookings);
 
-        // go back to main oage
-        window.location.href = "mainPage.html";
+                alert("Lab booking confirmed!");
+                window.location.href = "mainPage.html";
+            })
+            .catch(function(err){
+                console.error("Error saving lab booking:", err);
+                alert("Failed to save lab booking");
+            });
+        }
+        else if(resource.includes("Room")){
+            
+            // POST to rooms booking API
+            fetch(API_BASE + "/admin/rooms", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(newBooking)
+            })
+            .then(function(res){ return res.json(); })
+            .then(function(data){
+                console.log("Room booking saved:", data);
+
+                // add new booking to the list
+                bookings.push(newBooking);
+                saveBookingForAdd(bookings);
+
+                alert("Room booking confirmed!");
+                window.location.href = "mainPage.html";
+            })
+            .catch(function(err){
+                console.error("Error saving room booking:", err);
+                alert("Failed to save room booking");
+            });
+        }
+        else if(resource.includes("Equipment")){
+
+            // POST to equipment booking API
+            fetch(API_BASE + "/admin/equipment", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(newBooking)
+            })
+            .then(function(res){ return res.json(); })
+            .then(function(data){
+                console.log("Equipment booking saved:", data);
+
+                // add new booking to the list
+                bookings.push(newBooking);
+                saveBookingForAdd(bookings);
+                
+                alert("Equipment booking confirmed!");
+                window.location.href = "mainPage.html";
+            })
+            .catch(function(err){
+                console.error("Error saving equipment booking:", err);
+                alert("Failed to save equipment booking");
+            });
+        }
     });
 };

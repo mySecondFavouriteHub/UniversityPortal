@@ -9,7 +9,7 @@ const resourceTables = schemaMap.resourceTables;
 const db = new dao({
    host: 'localhost',
    user: 'root',
-   password: '12345678',
+   password: '3232',
    port: 3306,
    database: 'concordia_soen_proj'
 });
@@ -165,6 +165,7 @@ server.use('/admin/:resource', (req, res, next) => {
 
    next();
 });
+
 /*
 GET
  */
